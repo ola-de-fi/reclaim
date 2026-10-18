@@ -9,6 +9,7 @@ import {
   type PublicClient,
 } from "viem";
 import { CHAINS, type ChainConfig } from "@/config/chains";
+import { outboxAbi } from "@/lib/claims/outbox";
 import { readMany, withRetry } from "../multicall";
 import type { ClaimablePosition, ProtocolAdapter, ScanContext } from "../types";
 
@@ -47,10 +48,6 @@ const AssertionConfirmed = parseAbiItem(
   "event AssertionConfirmed(bytes32 indexed assertionHash, bytes32 blockHash, bytes32 sendRoot)",
 );
 
-const outboxAbi = parseAbi([
-  "function isSpent(uint256 index) view returns (bool)",
-  "function executeTransaction(bytes32[] proof, uint256 index, address l2Sender, address to, uint256 l2Block, uint256 l1Block, uint256 l2Timestamp, uint256 value, bytes data)",
-]);
 const rollupAbi = parseAbi(["function confirmPeriodBlocks() view returns (uint64)"]);
 const nodeInterfaceAbi = parseAbi([
   "function constructOutboxProof(uint64 size, uint64 leaf) view returns (bytes32 send, bytes32 root, bytes32[] proof)",

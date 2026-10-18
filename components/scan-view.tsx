@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { ClaimDialog } from "@/components/claim-dialog";
 import { getChainById } from "@/config/chains";
 import { useScan, type AdapterState } from "@/lib/scanner/use-scan";
 import type { ClaimablePosition, PositionKind } from "@/lib/scanner/types";
@@ -16,67 +17,89 @@ const KIND_LABEL: Record<PositionKind, string> = {
   wallet_asset: "In wallet",
 };
 
+const ClaimContext = createContext<{ open: (p: ClaimablePosition) => void; claimed: Set<string> }>({
+  open: () => {},
+  claimed: new Set(),
+});
+
 export function ScanView({ address }: { address: string }) {
   const scan = useScan(address);
+  const [claiming, setClaiming] = useState<ClaimablePosition | null>(null);
+  const [claimed, setClaimed] = useState<Set<string>>(() => new Set());
+  const markClaimed = useCallback((id: string) => setClaimed((s) => new Set(s).add(id)), []);
   const { summary, positions, phase } = scan;
   const recoverable = positions.filter((p) => p.kind !== "wallet_asset");
   const walletAssets = positions.filter((p) => p.kind === "wallet_asset");
   const categories = Object.entries(summary.byCategory).sort((a, b) => b[1] - a[1]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="rounded-lg border border-zinc-800 bg-zinc-900">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 px-4 py-3 font-mono text-xs text-zinc-500">
-          <span title={address}>{short(address)}</span>
-          <StatusPill phase={phase} ms={scan.ms} />
-        </div>
-        <div className="grid gap-px bg-zinc-800 sm:grid-cols-3">
-          <Stat label="Claimable now" value={summary.claimableUsd} accent />
-          <Stat
-            label="Pending"
-            value={summary.pendingUsd}
-            hint={positions.some((p) => p.kind === "pending") ? "unlocks later" : undefined}
-          />
-          <Stat label="Already in wallet" value={summary.walletAssetUsd} hint="not counted" muted />
-        </div>
-        {categories.length > 0 && (
-          <div className="flex flex-wrap gap-2 border-t border-zinc-800 px-4 py-3">
-            {categories.map(([cat, value]) => (
-              <span
-                key={cat}
-                className="rounded border border-zinc-800 bg-zinc-950 px-2 py-1 font-mono text-xs text-zinc-400"
-              >
-                {cat} <span className="text-zinc-200">{usd(value)}</span>
-              </span>
-            ))}
+    <ClaimContext.Provider value={{ open: setClaiming, claimed }}>
+      <div className="flex flex-col gap-6">
+        <section className="rounded-lg border border-zinc-800 bg-zinc-900">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 px-4 py-3 font-mono text-xs text-zinc-500">
+            <span title={address}>{short(address)}</span>
+            <StatusPill phase={phase} ms={scan.ms} />
+          </div>
+          <div className="grid gap-px bg-zinc-800 sm:grid-cols-3">
+            <Stat label="Claimable now" value={summary.claimableUsd} accent />
+            <Stat
+              label="Pending"
+              value={summary.pendingUsd}
+              hint={positions.some((p) => p.kind === "pending") ? "unlocks later" : undefined}
+            />
+            <Stat
+              label="Already in wallet"
+              value={summary.walletAssetUsd}
+              hint="not counted"
+              muted
+            />
+          </div>
+          {categories.length > 0 && (
+            <div className="flex flex-wrap gap-2 border-t border-zinc-800 px-4 py-3">
+              {categories.map(([cat, value]) => (
+                <span
+                  key={cat}
+                  className="rounded border border-zinc-800 bg-zinc-950 px-2 py-1 font-mono text-xs text-zinc-400"
+                >
+                  {cat} <span className="text-zinc-200">{usd(value)}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {phase === "error" && (
+          <div
+            role="alert"
+            className="rounded-lg border border-red-900/60 bg-red-950/30 px-4 py-3 text-sm text-red-300"
+          >
+            {scan.error}{" "}
+            <button onClick={() => window.location.reload()} className="underline">
+              Retry
+            </button>
           </div>
         )}
-      </section>
 
-      {phase === "error" && (
-        <div
-          role="alert"
-          className="rounded-lg border border-red-900/60 bg-red-950/30 px-4 py-3 text-sm text-red-300"
-        >
-          {scan.error}{" "}
-          <button onClick={() => window.location.reload()} className="underline">
-            Retry
-          </button>
-        </div>
+        <PositionsSection
+          title="Recoverable"
+          positions={recoverable}
+          phase={phase}
+          empty={`Nothing recoverable found across ${scan.adapters.length} protocol${scan.adapters.length === 1 ? "" : "s"}.`}
+        />
+        {walletAssets.length > 0 && (
+          <PositionsSection title="Already in your wallet" positions={walletAssets} phase={phase} />
+        )}
+
+        <AdapterPanel adapters={scan.adapters} log={scan.log} phase={phase} />
+      </div>
+      {claiming && (
+        <ClaimDialog
+          position={claiming}
+          onClose={() => setClaiming(null)}
+          onClaimed={markClaimed}
+        />
       )}
-
-      <PositionsSection
-        title="Recoverable"
-        positions={recoverable}
-        phase={phase}
-        empty={`Nothing recoverable found across ${scan.adapters.length} protocol${scan.adapters.length === 1 ? "" : "s"}.`}
-      />
-      {walletAssets.length > 0 && (
-        <PositionsSection title="Already in your wallet" positions={walletAssets} phase={phase} />
-      )}
-
-      <AdapterPanel adapters={scan.adapters} log={scan.log} phase={phase} />
-    </div>
+    </ClaimContext.Provider>
   );
 }
 
@@ -294,7 +317,21 @@ function Countdown({ readyAt }: { readyAt: number }) {
 }
 
 function Action({ p }: { p: ClaimablePosition }) {
+  const { open, claimed } = useContext(ClaimContext);
   const base = "inline-block rounded-md px-3 py-1.5 text-xs font-medium";
+  if (claimed.has(p.id)) {
+    return <span className={`${base} text-accent`}>✓ Claimed</span>;
+  }
+  if (p.kind === "claimable" && p.claimAction.type === "direct") {
+    return (
+      <button
+        onClick={() => open(p)}
+        className={`${base} bg-accent text-zinc-950 hover:brightness-110 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none`}
+      >
+        Claim
+      </button>
+    );
+  }
   if (p.claimAction.type === "external") {
     return (
       <a
@@ -308,7 +345,7 @@ function Action({ p }: { p: ClaimablePosition }) {
     );
   }
   if (p.kind === "wallet_asset") return null;
-  // Direct and multi-step claims arrive with wallet connection in Phase 4.
+  // Multi-step claims and claims without calldata are not supported yet.
   return (
     <button disabled className={`${base} cursor-not-allowed bg-zinc-800 text-zinc-500`}>
       {p.kind === "pending" ? "Not ready" : "Claim · soon"}
