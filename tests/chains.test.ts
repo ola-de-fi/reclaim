@@ -22,11 +22,18 @@ describe("chain config", () => {
     }
   });
 
+  it("has verified Multicall3 on Robinhood mainnet", () => {
+    expect(CHAINS.robinhood.contracts.multicall3).toMatchObject({
+      status: "verified",
+      value: "0xcA11bde05977b3631167028862bE2a173976CA11",
+    });
+  });
+
   it("keeps unverified Robinhood contracts and integrations unset", () => {
+    expect(CHAINS.robinhoodTestnet.contracts.multicall3.value).toBeNull();
     for (const chain of [CHAINS.robinhood, CHAINS.robinhoodTestnet]) {
-      const { multicall3, usdc, canonicalBridge, dexRouters } = chain.contracts;
+      const { usdc, canonicalBridge, dexRouters } = chain.contracts;
       const values = [
-        multicall3,
         usdc,
         dexRouters,
         canonicalBridge.inbox,

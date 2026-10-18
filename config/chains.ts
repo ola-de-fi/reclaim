@@ -88,7 +88,15 @@ export const CHAINS: Record<ChainKey, ChainConfig> = {
     explorer: { name: "Blockscout", url: "https://robinhoodchain.blockscout.com" },
     docsUrl: ROBINHOOD_DOCS,
     settlesTo: "ethereum",
-    contracts: unverifiedContracts(),
+    contracts: {
+      ...unverifiedContracts(),
+      multicall3: {
+        status: "verified",
+        value: "0xcA11bde05977b3631167028862bE2a173976CA11",
+        source:
+          "Runtime bytecode keccak 0xd5c15df6… identical to Ethereum Multicall3 (checked 2026-10-18)",
+      },
+    },
     bridgeIntegrations: unverifiedIntegrations(ROBINHOOD_INTEGRATION_NOTE),
   },
   robinhoodTestnet: {

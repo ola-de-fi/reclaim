@@ -5,22 +5,22 @@ kept as `status: "unverified"` (value `null`) in `config/chains.ts` and must not
 
 ## Verified — Robinhood Chain
 
-| Property                  | Mainnet                                                       | Testnet                                      |
-| ------------------------- | ------------------------------------------------------------- | -------------------------------------------- |
-| Chain ID                  | `4663`                                                        | `46630`                                      |
-| Gas token                 | ETH                                                           | ETH                                          |
-| Public RPC (rate-limited) | `https://rpc.mainnet.chain.robinhood.com`                     | `https://rpc.testnet.chain.robinhood.com`    |
-| Explorer                  | https://robinhoodchain.blockscout.com                         | https://explorer.testnet.chain.robinhood.com |
-| Stack                     | Arbitrum-based Ethereum L2                                    | same                                         |
-| Settles to                | Ethereum                                                      | —                                            |
-| Canonical bridge          | Arbitrum canonical bridge, ~7-day withdrawal challenge period | —                                            |
+| Property                  | Mainnet                                                                                           | Testnet                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| Chain ID                  | `4663`                                                                                            | `46630`                                      |
+| Gas token                 | ETH                                                                                               | ETH                                          |
+| Public RPC (rate-limited) | `https://rpc.mainnet.chain.robinhood.com`                                                         | `https://rpc.testnet.chain.robinhood.com`    |
+| Explorer                  | https://robinhoodchain.blockscout.com                                                             | https://explorer.testnet.chain.robinhood.com |
+| Stack                     | Arbitrum-based Ethereum L2                                                                        | same                                         |
+| Settles to                | Ethereum                                                                                          | —                                            |
+| Canonical bridge          | Arbitrum canonical bridge, ~7-day withdrawal challenge period                                     | —                                            |
+| Multicall3                | `0xcA11bde05977b3631167028862bE2a173976CA11` (bytecode identical to Ethereum, checked 2026-10-18) | unverified                                   |
 
 Secondary chains (Ethereum, Arbitrum, Base, Optimism) use viem's maintained chain definitions,
 including their Multicall3 addresses.
 
 ## Unverified — Robinhood Chain
 
-- Multicall3 deployment (check bytecode at `0xcA11bde05977b3631167028862bE2a173976CA11` on the explorer)
 - Canonical bridge contracts: Inbox, Outbox, Rollup (and the parent-chain side on Ethereum)
 - Canonical USDC address and liquidity
 - DEX routers
