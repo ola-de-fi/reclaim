@@ -1,0 +1,10 @@
+# Only these dependencies may run install scripts.
+# bufferutil / utf-8-validate / keccak are optional native speedups with JS fallbacks.
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true
+  "@tailwindcss/oxide": true
+  sharp: true
+  bufferutil: false
+  utf-8-validate: false
+  keccak: false
