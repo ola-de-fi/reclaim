@@ -17,7 +17,6 @@ export const C = {
   stamp: "#C2361B",
 };
 const DOMAIN = "usereclaim.xyz";
-const RING = "LOST PROPERTY • RECLAIMED • ON CHAIN • ";
 
 /** Google Fonts CSS API returns TTF when asked without a browser user agent. */
 async function font(family, { weight = 400, italic = false } = {}) {
@@ -38,92 +37,25 @@ async function font(family, { weight = 400, italic = false } = {}) {
 const h = (type, style = {}, children) => ({ type, props: { style, children } });
 
 /**
- * The Reclaim stamp. `ring: false` is the small-size variant (favicon, < ~48px):
- * no ring text, heavier rules, filled card centre so it holds on any background.
+ * The Reclaim claim tag: a luggage tag (tilted -10°) with an eyelet, a string and a
+ * return arrow. "This belongs to someone. Send it back."
+ * `small` is the favicon/app variant: no string, heavier strokes, filled card body.
  */
-export function stamp(size, { color = C.stamp, ring = true, fill = "transparent", rotate = -12 } = {}) {
-  const s = size;
-  const outerW = ring ? 0.0375 * s : 0.07 * s;
-  const innerR = ring ? 0.3 * s : 0.33 * s;
-  const innerW = ring ? 0.013 * s : 0.03 * s;
-  const kids = [
-    h("div", {
-      position: "absolute",
-      left: 0.04 * s,
-      top: 0.04 * s,
-      width: 0.92 * s,
-      height: 0.92 * s,
-      borderRadius: "50%",
-      border: `${outerW}px solid ${color}`,
-      boxSizing: "border-box",
-      backgroundColor: fill,
-    }),
-    h("div", {
-      position: "absolute",
-      left: s / 2 - innerR,
-      top: s / 2 - innerR,
-      width: innerR * 2,
-      height: innerR * 2,
-      borderRadius: "50%",
-      border: `${innerW}px solid ${color}`,
-      boxSizing: "border-box",
-    }),
-    h(
-      "div",
-      {
-        position: "absolute",
-        left: 0,
-        top: 0,
-        width: s,
-        height: s,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "Instrument Serif",
-        fontSize: (ring ? 0.47 : 0.62) * s,
-        color,
-        lineHeight: 1,
-        paddingTop: (ring ? 0.035 : 0.05) * s,
-      },
-      "R",
-    ),
-  ];
-  if (ring) {
-    const chars = [...RING];
-    const r = 0.375 * s;
-    const fs = 0.083 * s;
-    chars.forEach((ch, i) => {
-      if (ch === " ") return;
-      const deg = -90 + (i * 360) / chars.length;
-      const rad = (deg * Math.PI) / 180;
-      kids.push(
-        h(
-          "div",
-          {
-            position: "absolute",
-            left: s / 2 + r * Math.cos(rad) - fs / 2,
-            top: s / 2 + r * Math.sin(rad) - fs / 2,
-            width: fs,
-            height: fs,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: "IBM Plex Mono",
-            fontWeight: 600,
-            fontSize: fs,
-            color,
-            transform: `rotate(${deg + 90}deg)`,
-          },
-          ch,
-        ),
-      );
-    });
-  }
-  return h(
-    "div",
-    { position: "relative", width: s, height: s, display: "flex", transform: `rotate(${rotate}deg)` },
-    kids,
-  );
+export function tagSvg({ line = C.ink, fill = C.card, accent = C.stamp, small = false } = {}) {
+  const w = small ? 5 : 3.6;
+  const a = small ? 5.2 : 3.8;
+  const string = small
+    ? ""
+    : `<path d="M6 14 C 10 22, 14 28, 20 32" fill="none" stroke="${line}" stroke-width="2.4" stroke-linecap="round"/>`;
+  const body = small ? "M9 19 L20 9 H54 V55 H20 L9 45 Z" : "M16 20 L26 11 H56 V53 H26 L16 44 Z";
+  const eye = small ? { cx: 18, cy: 32, r: 4 } : { cx: 23, cy: 32, r: 3.4 };
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><g transform="rotate(-10 34 32)">${string}<path d="${body}" fill="${fill}" stroke="${line}" stroke-width="${w}" stroke-linejoin="round"/><circle cx="${eye.cx}" cy="${eye.cy}" r="${eye.r}" fill="${C.paper}" stroke="${line}" stroke-width="${small ? 4 : 3}"/><path d="${small ? "M46 24 H37 a8 8 0 0 0 0 16 H46" : "M49 24 H40 a8 8 0 0 0 0 16 H49"}" fill="none" stroke="${accent}" stroke-width="${a}" stroke-linecap="round"/><path d="${small ? "M41 34.5 L46.5 40 L41 45.5" : "M44 34.5 L49.5 40 L44 45.5"}" fill="none" stroke="${accent}" stroke-width="${a}" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
+}
+
+/** Tag as a satori node (embedded SVG image). */
+export function tag(size, opts) {
+  const src = `data:image/svg+xml;base64,${Buffer.from(tagSvg(opts)).toString("base64")}`;
+  return { type: "img", props: { src, width: size, height: size, style: {} } };
 }
 
 const ruled = (gap = 32) => ({
@@ -154,36 +86,63 @@ async function main() {
   const box = (w, hgt, style, children) =>
     h("div", { width: w, height: hgt, display: "flex", ...style }, children);
 
-  // --- Logo marks ---
-  await render("mark", box(512, 512, { alignItems: "center", justifyContent: "center" }, stamp(500)), 512, 512);
-  await render("mark-paper", box(512, 512, { alignItems: "center", justifyContent: "center" }, stamp(500, { color: C.card })), 512, 512);
-  await render("mark-ink", box(512, 512, { alignItems: "center", justifyContent: "center" }, stamp(500, { color: C.ink })), 512, 512);
-  await render(
-    "mark-small",
-    box(64, 64, { alignItems: "center", justifyContent: "center" }, stamp(64, { ring: false, fill: C.card })),
-    64,
-    64,
-  );
+  // --- Logo marks (pure vector, no text) ---
+  const writeMark = async (name, svg) => {
+    await writeFile(new URL(`${name}.svg`, OUT), svg);
+    const img = new Resvg(svg, { fitTo: { mode: "width", value: 1024 } }).render();
+    await writeFile(new URL(`${name}.png`, OUT), img.asPng());
+    console.log("wrote", name);
+  };
+  await writeMark("mark", tagSvg());
+  await writeMark("mark-reversed", tagSvg({ line: C.paper, fill: C.ink, accent: "#E0573A" }));
+  await writeMark("mark-ink", tagSvg({ accent: C.ink }));
+  await writeMark("mark-small", tagSvg({ small: true }));
 
   // --- Lockups ---
   const lockup = (color, word) =>
     box(1000, 300, { alignItems: "center", gap: 36, paddingLeft: 20 }, [
-      stamp(260, { color }),
-      h("div", { fontFamily: "Instrument Serif", fontSize: 190, color: word, lineHeight: 1, letterSpacing: -3, display: "flex" }, "Reclaim"),
+      tag(270, color),
+      h(
+        "div",
+        {
+          fontFamily: "Instrument Serif",
+          fontSize: 190,
+          color: word,
+          lineHeight: 1,
+          letterSpacing: -3,
+          display: "flex",
+        },
+        "Reclaim",
+      ),
     ]);
-  await render("lockup", lockup(C.stamp, C.ink), 1000, 300);
-  await render("lockup-reversed", box(1000, 300, { backgroundColor: C.ink }, lockup(C.card, C.card)), 1000, 300);
+  await render("lockup", lockup({}, C.ink), 1000, 300);
+  await render(
+    "lockup-reversed",
+    box(
+      1000,
+      300,
+      { backgroundColor: C.ink },
+      lockup({ line: C.paper, fill: C.ink, accent: "#E0573A" }, C.card),
+    ),
+    1000,
+    300,
+  );
 
   // --- App icons ---
   const appIcon = (s) =>
-    box(s, s, { alignItems: "center", justifyContent: "center", backgroundColor: C.paper }, stamp(s * 0.86, { ring: s >= 256, fill: C.card }));
+    box(
+      s,
+      s,
+      { alignItems: "center", justifyContent: "center", backgroundColor: C.paper },
+      tag(s * 0.82, { small: s < 256 }),
+    );
   await render("app-icon-512", appIcon(512), 512, 512, { svg: false });
   await render("apple-touch-icon", appIcon(180), 180, 180, { svg: false });
 
   // --- Social: avatar (X crops to a circle) ---
   await render(
     "x-avatar",
-    box(400, 400, { alignItems: "center", justifyContent: "center", ...ruled(20) }, stamp(330, { fill: C.card })),
+    box(400, 400, { alignItems: "center", justifyContent: "center", ...ruled(20) }, tag(300)),
     400,
     400,
     { svg: false },
@@ -193,16 +152,61 @@ async function main() {
   await render(
     "x-banner",
     box(1500, 500, { ...ruled(32), position: "relative" }, [
-      h("div", { position: "absolute", left: 440, top: 100, display: "flex", flexDirection: "column", width: 640 }, [
-        h("div", { fontFamily: "IBM Plex Mono", fontWeight: 600, fontSize: 18, letterSpacing: 3, color: C.ink2, display: "flex" }, "LOST-PROPERTY OFFICE · ROBINHOOD CHAIN"),
-        h("div", { display: "flex", flexWrap: "wrap", fontFamily: "Instrument Serif", fontSize: 74, lineHeight: 1.02, color: C.ink, marginTop: 22, letterSpacing: -1 }, [
-          h("span", { marginRight: 20 }, "Money you"),
-          h("span", { fontStyle: "italic", color: C.stamp, marginRight: 20 }, "left behind"),
-          h("span", {}, "is still waiting for you."),
-        ]),
-        h("div", { fontFamily: "IBM Plex Mono", fontSize: 22, color: C.ink, marginTop: 30, display: "flex" }, DOMAIN),
-      ]),
-      h("div", { position: "absolute", right: 80, top: 90, display: "flex" }, stamp(320)),
+      h(
+        "div",
+        {
+          position: "absolute",
+          left: 440,
+          top: 100,
+          display: "flex",
+          flexDirection: "column",
+          width: 640,
+        },
+        [
+          h(
+            "div",
+            {
+              fontFamily: "IBM Plex Mono",
+              fontWeight: 600,
+              fontSize: 18,
+              letterSpacing: 3,
+              color: C.ink2,
+              display: "flex",
+            },
+            "LOST-PROPERTY OFFICE · ROBINHOOD CHAIN",
+          ),
+          h(
+            "div",
+            {
+              display: "flex",
+              flexWrap: "wrap",
+              fontFamily: "Instrument Serif",
+              fontSize: 74,
+              lineHeight: 1.02,
+              color: C.ink,
+              marginTop: 22,
+              letterSpacing: -1,
+            },
+            [
+              h("span", { marginRight: 20 }, "Money you"),
+              h("span", { fontStyle: "italic", color: C.stamp, marginRight: 20 }, "left behind"),
+              h("span", {}, "is still waiting for you."),
+            ],
+          ),
+          h(
+            "div",
+            {
+              fontFamily: "IBM Plex Mono",
+              fontSize: 22,
+              color: C.ink,
+              marginTop: 30,
+              display: "flex",
+            },
+            DOMAIN,
+          ),
+        ],
+      ),
+      h("div", { position: "absolute", right: 90, top: 70, display: "flex" }, tag(360)),
     ]),
     1500,
     500,
@@ -213,20 +217,81 @@ async function main() {
   await render(
     "post-launch",
     box(1200, 675, { ...ruled(32), position: "relative" }, [
-      h("div", { position: "absolute", left: 80, top: 80, width: 720, display: "flex", flexDirection: "column" }, [
-        h("div", { fontFamily: "IBM Plex Mono", fontWeight: 600, fontSize: 20, letterSpacing: 3, color: C.stamp, display: "flex" }, "NOW OPEN"),
-        h("div", { display: "flex", flexWrap: "wrap", fontFamily: "Instrument Serif", fontSize: 92, lineHeight: 0.98, color: C.ink, marginTop: 20, letterSpacing: -1 }, [
-          h("span", { marginRight: 22 }, "Lost something on"),
-          h("span", { fontStyle: "italic", color: C.stamp }, "Robinhood Chain?"),
-        ]),
-        h("div", { fontFamily: "IBM Plex Sans", fontSize: 30, lineHeight: 1.35, color: C.ink2, marginTop: 30, display: "flex" },
-          "Reclaim finds unclaimed bridge withdrawals and failed deposits, then helps you get them back. No wallet needed to look. No fee."),
-      ]),
-      h("div", { position: "absolute", right: 80, top: 150, display: "flex" }, stamp(300)),
-      h("div", { position: "absolute", left: 80, bottom: 60, right: 80, borderTop: `2px solid ${C.ink}`, paddingTop: 18, display: "flex", justifyContent: "space-between", fontFamily: "IBM Plex Mono", fontSize: 24, color: C.ink }, [
-        h("span", {}, DOMAIN),
-        h("span", { color: C.ink3 }, "Non-custodial · simulated before you sign"),
-      ]),
+      h(
+        "div",
+        {
+          position: "absolute",
+          left: 80,
+          top: 80,
+          width: 720,
+          display: "flex",
+          flexDirection: "column",
+        },
+        [
+          h(
+            "div",
+            {
+              fontFamily: "IBM Plex Mono",
+              fontWeight: 600,
+              fontSize: 20,
+              letterSpacing: 3,
+              color: C.stamp,
+              display: "flex",
+            },
+            "NOW OPEN",
+          ),
+          h(
+            "div",
+            {
+              display: "flex",
+              flexWrap: "wrap",
+              fontFamily: "Instrument Serif",
+              fontSize: 92,
+              lineHeight: 0.98,
+              color: C.ink,
+              marginTop: 20,
+              letterSpacing: -1,
+            },
+            [
+              h("span", { marginRight: 22 }, "Lost something on"),
+              h("span", { fontStyle: "italic", color: C.stamp }, "Robinhood Chain?"),
+            ],
+          ),
+          h(
+            "div",
+            {
+              fontFamily: "IBM Plex Sans",
+              fontSize: 30,
+              lineHeight: 1.35,
+              color: C.ink2,
+              marginTop: 30,
+              display: "flex",
+            },
+            "Reclaim finds unclaimed bridge withdrawals and failed deposits, then helps you get them back. No wallet needed to look. No fee.",
+          ),
+        ],
+      ),
+      h("div", { position: "absolute", right: 70, top: 120, display: "flex" }, tag(330)),
+      h(
+        "div",
+        {
+          position: "absolute",
+          left: 80,
+          bottom: 60,
+          right: 80,
+          borderTop: `2px solid ${C.ink}`,
+          paddingTop: 18,
+          display: "flex",
+          justifyContent: "space-between",
+          fontFamily: "IBM Plex Mono",
+          fontSize: 24,
+          color: C.ink,
+        },
+        [
+          h("span", {}, DOMAIN),
+          h("span", { color: C.ink3 }, "Non-custodial · simulated before you sign"),
+        ],
+      ),
     ]),
     1200,
     675,

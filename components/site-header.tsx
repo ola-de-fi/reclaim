@@ -2,30 +2,49 @@ import Link from "next/link";
 import { PRIMARY_CHAIN } from "@/config/chains";
 import { WalletButton } from "@/components/wallet-button";
 
-export function LogoMark({ className = "size-7" }: { className?: string }) {
+/** The claim tag. Geometry matches design/brand/assets/mark.svg (scripts/brand/export.mjs). */
+export function LogoMark({ className = "size-8" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 32 32" aria-hidden="true" className={`flex-none ${className}`}>
-      <path
-        d="M4 9.5 11 3h17v26H11L4 22.5z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <circle cx="10" cy="16" r="2.2" fill="none" stroke="currentColor" strokeWidth="2" />
-      <path
-        d="M23 11.5h-6.5a3.5 3.5 0 0 0 0 7H23"
-        fill="none"
-        stroke="var(--color-stamp)"
-        strokeWidth="2.2"
-      />
-      <path
-        d="m20 15.5 3 3-3 3"
-        fill="none"
-        stroke="var(--color-stamp)"
-        strokeWidth="2.2"
-        strokeLinejoin="round"
-      />
+    <svg viewBox="0 0 64 64" aria-hidden="true" className={`flex-none ${className}`}>
+      <g transform="rotate(-10 34 32)">
+        <path
+          d="M6 14 C 10 22, 14 28, 20 32"
+          fill="none"
+          stroke="var(--color-ink)"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+        />
+        <path
+          d="M16 20 L26 11 H56 V53 H26 L16 44 Z"
+          fill="var(--color-card)"
+          stroke="var(--color-ink)"
+          strokeWidth="3.6"
+          strokeLinejoin="round"
+        />
+        <circle
+          cx="23"
+          cy="32"
+          r="3.4"
+          fill="var(--color-paper)"
+          stroke="var(--color-ink)"
+          strokeWidth="3"
+        />
+        <path
+          d="M49 24 H40 a8 8 0 0 0 0 16 H49"
+          fill="none"
+          stroke="var(--color-stamp)"
+          strokeWidth="3.8"
+          strokeLinecap="round"
+        />
+        <path
+          d="M44 34.5 L49.5 40 L44 45.5"
+          fill="none"
+          stroke="var(--color-stamp)"
+          strokeWidth="3.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
     </svg>
   );
 }
