@@ -3,7 +3,12 @@ import { positionSchema } from "./schema";
 import type { ClaimablePosition, PositionCategory, ProtocolAdapter, ScanContext } from "./types";
 
 export type ScanEvent =
-  | { type: "scan_started"; address: Address; adapterIds: string[] }
+  | {
+      type: "scan_started";
+      address: Address;
+      adapterIds: string[];
+      adapters: Array<{ id: string; name: string; category: PositionCategory }>;
+    }
   | { type: "adapter_started"; adapterId: string }
   | {
       type: "adapter_done";
@@ -62,7 +67,12 @@ export async function* runScan(
     ? adapters.filter((a) => a.supportedChainIds.some((id) => options.chainIds!.includes(id)))
     : adapters;
 
-  yield { type: "scan_started", address, adapterIds: selected.map((a) => a.id) };
+  yield {
+    type: "scan_started",
+    address,
+    adapterIds: selected.map((a) => a.id),
+    adapters: selected.map(({ id, name, category }) => ({ id, name, category })),
+  };
 
   // Small queue so finished adapters are yielded in completion order.
   const queue: ScanEvent[] = [];

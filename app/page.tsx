@@ -1,15 +1,11 @@
-import { ALL_CHAINS, PRIMARY_CHAIN } from "@/config/chains";
+import { ALL_CHAINS } from "@/config/chains";
+import { AddressForm } from "@/components/address-form";
+import { SiteHeader } from "@/components/site-header";
 
 export default function Home() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 sm:px-6">
-      <header className="flex items-center justify-between border-b border-zinc-800 py-4">
-        <span className="text-sm font-semibold tracking-tight">Reclaim</span>
-        <span className="flex items-center gap-2 font-mono text-xs text-zinc-400">
-          <span className="size-1.5 rounded-full bg-accent" aria-hidden />
-          {PRIMARY_CHAIN.name} · {PRIMARY_CHAIN.id}
-        </span>
-      </header>
+      <SiteHeader />
 
       <main className="flex flex-1 flex-col gap-10 py-14 sm:py-20">
         <section className="space-y-4">
@@ -24,26 +20,7 @@ export default function Home() {
         </section>
 
         <section aria-label="Scanner" className="rounded-lg border border-zinc-800 bg-zinc-900">
-          <div className="flex flex-col gap-3 p-4 sm:flex-row">
-            <label htmlFor="address" className="sr-only">
-              Wallet address
-            </label>
-            <input
-              id="address"
-              disabled
-              placeholder="0x… or name.eth"
-              className="min-w-0 flex-1 rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2.5 font-mono text-sm text-zinc-300 placeholder:text-zinc-600 disabled:cursor-not-allowed"
-            />
-            <button
-              disabled
-              className="rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-zinc-950 opacity-40 disabled:cursor-not-allowed"
-            >
-              Scan
-            </button>
-          </div>
-          <div className="border-t border-zinc-800 px-4 py-3 font-mono text-xs text-zinc-500">
-            Scanner coming soon
-          </div>
+          <AddressForm />
         </section>
 
         <section
