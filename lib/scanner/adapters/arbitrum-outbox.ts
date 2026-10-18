@@ -146,8 +146,13 @@ export async function mapPool<T, R>(
   return out;
 }
 
-/** At most this many getLogs requests in flight per query; the public RPC rate-limits bursts. */
-const LOG_CONCURRENCY = 4;
+/**
+ * getLogs requests in flight per query. The public Robinhood RPC rate-limits bursts (HTTP 429 on
+ * shared datacenter IPs), so stay gentler unless a private RPC override is configured.
+ */
+function logConcurrency(): number {
+  return process.env[CHAINS.robinhood.rpc.envVar]?.trim() ? 4 : 2;
+}
 
 async function getLogsChunked<T>(
   latest: bigint,
@@ -156,7 +161,7 @@ async function getLogsChunked<T>(
 ): Promise<T[]> {
   const results = await mapPool(
     blockChunks(0n, latest),
-    LOG_CONCURRENCY,
+    logConcurrency(),
     ([from, to]) => withRetry(() => fetch(from, to), 3),
     signal,
   );

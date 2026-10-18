@@ -75,18 +75,19 @@ export async function readMany(
   return out;
 }
 
-/** Retries rate-limit and transient network errors with exponential backoff. */
+/** Retries rate-limit and transient network errors with exponential backoff and full jitter. */
 export async function withRetry<T>(
   fn: () => Promise<T>,
   retries: number,
-  baseMs = 250,
+  baseMs = 400,
 ): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     try {
       return await fn();
     } catch (err) {
       if (attempt >= retries || !isRetryable(err)) throw err;
-      await new Promise((r) => setTimeout(r, baseMs * 2 ** attempt));
+      // Full jitter: spreads retries from parallel workers instead of re-bursting in lockstep.
+      await new Promise((r) => setTimeout(r, Math.random() * baseMs * 2 ** attempt));
     }
   }
 }
