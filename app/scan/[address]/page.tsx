@@ -9,7 +9,7 @@ type Props = { params: Promise<{ address: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { address } = await params;
-  return { title: `Scan ${address.slice(0, 6)}…${address.slice(-4)} · Reclaim` };
+  return { title: `Scan ${address.slice(0, 6)}…${address.slice(-4)}` };
 }
 
 export default async function ScanPage({ params }: Props) {
@@ -18,10 +18,13 @@ export default async function ScanPage({ params }: Props) {
   const address = getAddress(raw);
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-4xl flex-col px-4 sm:px-6">
+    <div className="mx-auto flex min-h-dvh max-w-6xl flex-col px-4 sm:px-6">
       <SiteHeader />
       <main className="flex flex-1 flex-col gap-4 py-8">
-        <Link href="/" className="self-start font-mono text-xs text-zinc-500 hover:text-zinc-300">
+        <Link
+          href="/"
+          className="self-start font-mono text-xs tracking-[0.08em] text-ink-2 uppercase underline-offset-4 hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        >
           ← New scan
         </Link>
         <ScanView address={address} />

@@ -1,16 +1,17 @@
 "use client";
 
 import "@rainbow-me/rainbowkit/styles.css";
-import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider, lightTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { WagmiProvider } from "wagmi";
 import { createWagmiConfig } from "@/lib/providers/wagmi";
 
-const theme = darkTheme({
-  accentColor: "#b4f25a",
-  accentColorForeground: "#09090b",
+const theme = lightTheme({
+  accentColor: "#c2361b",
+  accentColorForeground: "#fbf8f1",
   borderRadius: "small",
+  fontStack: "system",
   overlayBlur: "none",
 });
 

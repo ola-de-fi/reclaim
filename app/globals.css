@@ -1,24 +1,77 @@
 @import "tailwindcss";
 
+/*
+ * Ledger design system: a lost-property office for money.
+ * Warm paper, ink type, one stamp colour for "act on this", navy for "in transit".
+ * Use these as Tailwind classes: bg-paper, bg-paper-2, bg-card, text-ink, text-ink-2, text-ink-3,
+ * border-rule, text-stamp / bg-stamp, text-stamp-ink, text-transit / bg-transit;
+ * fonts: font-serif (display), font-mono (all figures, addresses, labels), font-sans (body).
+ */
 @theme {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
-  /* The one accent colour: primary actions and recovered amounts only. */
-  --color-accent: #b4f25a;
-  --color-accent-muted: #b4f25a1a;
+  --color-paper: #f4efe4;
+  --color-paper-2: #ebe4d4;
+  --color-card: #fbf8f1;
+  --color-ink: #1a1814;
+  --color-ink-2: #4a453c;
+  --color-ink-3: #6b6458;
+  --color-rule: #cfc6b2;
+  /* Fills and large text only (white text on it passes AA at button sizes). */
+  --color-stamp: #c2361b;
+  /* Small stamp-coloured text on paper (6.4:1). */
+  --color-stamp-ink: #a82a12;
+  --color-transit: #1f3a5f;
+
+  --font-serif: var(--font-instrument-serif), Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: var(--font-plex-sans), system-ui, sans-serif;
+
+  /* Hard offset shadow instead of soft blur: printed, not floating. */
+  --shadow-ledger: 3px 3px 0 0 var(--color-ink);
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  background: var(--color-zinc-950);
-  color: var(--color-zinc-100);
+  background: var(--color-paper);
+  color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background: var(--color-accent);
-  color: var(--color-zinc-950);
+  background: var(--color-stamp);
+  color: var(--color-card);
+}
+
+/* Perforated edge for claim-ticket stubs: apply to a vertical divider element. */
+.perforation {
+  background-image: radial-gradient(circle, var(--color-paper) 3px, transparent 3.5px);
+  background-size: 10px 12px;
+  background-repeat: repeat-y;
+  background-position: center;
+}
+
+/* Rubber-stamp status badge. */
+.stamp {
+  display: inline-block;
+  border: 2px solid currentColor;
+  padding: 0.15rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transform: rotate(-3deg);
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

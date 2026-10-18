@@ -1,0 +1,1673 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reclaim — Concept C: Sonar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #0a1120;
+        --ink-2: #0f1829;
+        --panel: #131d31;
+        --panel-2: #18243b;
+        --line: #26344f;
+        --line-2: #33446a;
+        --text: #eee8da;
+        --muted: #a3aec2;
+        --dim: #76839c;
+        --brass: #cda45e;
+        --brass-hi: #e6c78e;
+        --brass-lo: #8e6e37;
+        --cool: #8cc3d6;
+        --cool-lo: #3e6c7f;
+        --warn: #e08a6a;
+        --display: "Bricolage Grotesque", system-ui, sans-serif;
+        --mono: "JetBrains Mono", ui-monospace, monospace;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        background: var(--ink);
+        color: var(--text);
+        font-family: var(--display);
+        font-size: 16px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      .mono {
+        font-family: var(--mono);
+      }
+      a {
+        color: var(--brass-hi);
+      }
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 32px;
+      }
+      @media (max-width: 640px) {
+        .wrap {
+          padding: 0 16px;
+        }
+      }
+
+      /* section labels (spec-sheet style) */
+      .spec {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--dim);
+        padding: 56px 0 20px;
+      }
+      .spec b {
+        color: var(--brass);
+        font-weight: 500;
+      }
+      .spec::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--line);
+      }
+      section.block {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 72px;
+      }
+
+      /* nav */
+      nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 22px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+        font-size: 20px;
+        letter-spacing: -0.01em;
+      }
+      .logo svg {
+        display: block;
+      }
+      .navlinks {
+        display: flex;
+        gap: 28px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      @media (max-width: 760px) {
+        .navlinks {
+          display: none;
+        }
+      }
+
+      /* buttons */
+      .btn {
+        appearance: none;
+        border: 0;
+        cursor: pointer;
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 14px 22px;
+        border-radius: 4px;
+        background: var(--brass);
+        color: #1a1306;
+        box-shadow:
+          inset 0 -2px 0 var(--brass-lo),
+          inset 0 1px 0 var(--brass-hi);
+      }
+      .btn:hover {
+        background: var(--brass-hi);
+      }
+      .btn:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--cool);
+        outline-offset: 2px;
+      }
+      .btn.ghost {
+        background: transparent;
+        color: var(--text);
+        box-shadow: inset 0 0 0 1px var(--line-2);
+      }
+      .btn.sm {
+        padding: 10px 16px;
+        font-size: 12px;
+      }
+
+      /* hero */
+      .hero {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 56px;
+        align-items: center;
+        padding: 40px 0 8px;
+      }
+      @media (max-width: 900px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+      }
+      .kicker {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--brass);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      h1 {
+        font-size: clamp(44px, 6.4vw, 84px);
+        line-height: 0.95;
+        letter-spacing: -0.035em;
+        font-weight: 800;
+        margin: 18px 0 22px;
+      }
+      h1 em {
+        font-style: normal;
+        color: var(--brass);
+      }
+      .lede {
+        color: var(--muted);
+        font-size: 19px;
+        max-width: 520px;
+        margin: 0 0 32px;
+      }
+      .form {
+        display: flex;
+        background: var(--panel);
+        border: 1px solid var(--line-2);
+        border-radius: 6px;
+        padding: 6px;
+        max-width: 560px;
+      }
+      .form label {
+        position: absolute;
+        left: -9999px;
+      }
+      .form input {
+        flex: 1;
+        min-width: 0;
+        background: transparent;
+        border: 0;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 15px;
+        padding: 12px 14px;
+      }
+      .form input::placeholder {
+        color: var(--dim);
+      }
+      .trustrow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 22px;
+        margin-top: 20px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .trustrow span::before {
+        content: "";
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border: 1px solid var(--brass);
+        border-radius: 50%;
+        margin-right: 8px;
+        vertical-align: 1px;
+      }
+
+      /* instrument housing */
+      .housing {
+        background: var(--ink-2);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 22px;
+        position: relative;
+      }
+      .housing .screws i {
+        position: absolute;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 35%, #4a5878, #1c2740);
+        border: 1px solid #0b1220;
+      }
+      .housing .screws i:nth-child(1) {
+        top: 10px;
+        left: 10px;
+      }
+      .housing .screws i:nth-child(2) {
+        top: 10px;
+        right: 10px;
+      }
+      .housing .screws i:nth-child(3) {
+        bottom: 10px;
+        left: 10px;
+      }
+      .housing .screws i:nth-child(4) {
+        bottom: 10px;
+        right: 10px;
+      }
+      .hdr {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--dim);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0 6px 12px;
+      }
+      .hdr .live {
+        color: var(--brass);
+      }
+      .dial {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .sweep {
+        transform-origin: 200px 200px;
+        animation: spin 6s linear infinite;
+      }
+      .sweep.fast {
+        animation-duration: 2.4s;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .blip {
+        animation: blip 6s ease-out infinite;
+        opacity: 0;
+      }
+      @keyframes blip {
+        0%,
+        4% {
+          opacity: 0;
+        }
+        6% {
+          opacity: 1;
+        }
+        40% {
+          opacity: 0.25;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+      .readout {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border-top: 1px solid var(--line);
+        margin-top: 10px;
+      }
+      .readout div {
+        padding: 12px 8px 2px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--dim);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .readout div + div {
+        border-left: 1px solid var(--line);
+        padding-left: 14px;
+      }
+      .readout b {
+        display: block;
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 500;
+        letter-spacing: 0;
+        text-transform: none;
+        margin-top: 4px;
+      }
+
+      /* how it works */
+      .cols3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(--line);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      @media (max-width: 860px) {
+        .cols3 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .cell {
+        background: var(--ink-2);
+        padding: 28px;
+      }
+      .cell .n {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--brass);
+      }
+      .cell h3 {
+        font-size: 24px;
+        letter-spacing: -0.02em;
+        margin: 10px 0 8px;
+        font-weight: 600;
+      }
+      .cell p {
+        color: var(--muted);
+        margin: 0;
+      }
+      h2 {
+        font-size: clamp(32px, 4vw, 48px);
+        letter-spacing: -0.03em;
+        line-height: 1.02;
+        margin: 0 0 28px;
+        font-weight: 800;
+        max-width: 760px;
+      }
+      .channels-def {
+        margin-top: 40px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      @media (max-width: 860px) {
+        .channels-def {
+          grid-template-columns: 1fr;
+        }
+      }
+      .chdef {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 22px;
+        background: var(--panel);
+      }
+      .chdef .tag {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .chdef .tag i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--brass);
+      }
+      .chdef.cool .tag i {
+        background: var(--cool);
+      }
+      .chdef.neutral .tag i {
+        background: var(--dim);
+      }
+      .chdef h3 {
+        font-size: 21px;
+        margin: 12px 0 8px;
+        letter-spacing: -0.015em;
+        font-weight: 600;
+      }
+      .chdef p {
+        color: var(--muted);
+        margin: 0 0 14px;
+        font-size: 15px;
+      }
+      .chdef .meta {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--text);
+        border-top: 1px dashed var(--line-2);
+        padding-top: 12px;
+      }
+      .tokens {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .tokens span {
+        font-family: var(--mono);
+        font-size: 11px;
+        border: 1px solid var(--line-2);
+        padding: 3px 7px;
+        border-radius: 3px;
+        color: var(--muted);
+      }
+
+      /* scan state */
+      .scan {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 28px;
+      }
+      @media (max-width: 900px) {
+        .scan {
+          grid-template-columns: 1fr;
+        }
+      }
+      .chan {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        padding: 16px 18px;
+        margin-bottom: 12px;
+      }
+      .chan-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+      .chan-top h4 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .chan-top .ch {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--dim);
+        margin-right: 8px;
+      }
+      .state {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--brass);
+      }
+      .state.cool {
+        color: var(--cool);
+      }
+      .state.done {
+        color: var(--muted);
+      }
+      .meter {
+        display: flex;
+        gap: 3px;
+        margin: 14px 0 10px;
+        height: 22px;
+        align-items: flex-end;
+      }
+      .meter i {
+        flex: 1;
+        background: var(--line-2);
+        border-radius: 1px;
+        height: 30%;
+        transition: height 0.25s;
+      }
+      .meter i.on {
+        background: var(--brass);
+      }
+      .meter.cool i.on {
+        background: var(--cool);
+      }
+      .log {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        height: 58px;
+        overflow: hidden;
+        line-height: 1.6;
+      }
+      .log .hit {
+        color: var(--brass-hi);
+      }
+      .log .pend {
+        color: var(--cool);
+      }
+      .prog {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--dim);
+        margin-top: 4px;
+      }
+
+      /* results */
+      .res-head {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: end;
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+      .addr {
+        font-family: var(--mono);
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .addr b {
+        color: var(--text);
+        font-weight: 500;
+      }
+      .totals {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--line);
+        gap: 1px;
+      }
+      @media (max-width: 760px) {
+        .totals {
+          grid-template-columns: 1fr;
+        }
+      }
+      .tot {
+        background: var(--ink-2);
+        padding: 24px 26px;
+      }
+      .tot .lbl {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .tot .lbl i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .tot .v {
+        font-size: 52px;
+        font-weight: 800;
+        letter-spacing: -0.035em;
+        line-height: 1;
+        margin: 14px 0 6px;
+        font-variant-numeric: tabular-nums;
+      }
+      .tot.main .v {
+        color: var(--brass-hi);
+        font-size: 68px;
+      }
+      .tot .s {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr;
+        gap: 24px;
+        margin-top: 24px;
+      }
+      @media (max-width: 980px) {
+        .grid2 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .pingcard {
+        border: 1px solid var(--brass-lo);
+        border-radius: 10px;
+        background: var(--panel);
+        overflow: hidden;
+      }
+      .pingcard .bar {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 18px;
+        background: #1e2234;
+        border-bottom: 1px solid var(--line);
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--brass);
+      }
+      .pingcard .body {
+        padding: 22px 18px;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 18px;
+        align-items: center;
+      }
+      @media (max-width: 560px) {
+        .pingcard .body {
+          grid-template-columns: 1fr;
+        }
+      }
+      .coords {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        display: grid;
+        grid-template-columns: auto auto;
+        gap: 3px 14px;
+      }
+      .coords dt {
+        color: var(--dim);
+      }
+      .coords dd {
+        margin: 0;
+        color: var(--text);
+      }
+      .amt {
+        font-size: 30px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .amt small {
+        display: block;
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--muted);
+        letter-spacing: 0;
+      }
+      .route {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .wallet {
+        border-top: 1px solid var(--line);
+        padding: 14px 18px;
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .wallet b {
+        color: var(--text);
+        font-weight: 500;
+      }
+
+      /* modal */
+      .modal {
+        border: 1px solid var(--line-2);
+        border-radius: 12px;
+        background: var(--panel-2);
+        box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
+      }
+      .modal header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--line);
+      }
+      .modal header h4 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .modal header span {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--dim);
+      }
+      .modal .recv {
+        padding: 20px;
+        border-bottom: 1px solid var(--line);
+      }
+      .modal .recv .lbl {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .modal .recv .big {
+        font-size: 40px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-top: 6px;
+      }
+      .modal .recv .big span {
+        color: var(--brass-hi);
+      }
+      .kv {
+        padding: 6px 20px;
+      }
+      .kv div {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 10px 0;
+        border-bottom: 1px dashed var(--line);
+        font-family: var(--mono);
+        font-size: 12.5px;
+      }
+      .kv div:last-child {
+        border-bottom: 0;
+      }
+      .kv dt {
+        color: var(--muted);
+      }
+      .kv dd {
+        margin: 0;
+        color: var(--text);
+        text-align: right;
+      }
+      .pass {
+        color: var(--brass-hi);
+      }
+      .modal footer {
+        padding: 16px 20px;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        border-top: 1px solid var(--line);
+      }
+      .fine {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--dim);
+        padding: 0 20px 16px;
+        margin: 0;
+      }
+
+      /* pending timeline */
+      .pending {
+        margin-top: 24px;
+        border: 1px solid var(--cool-lo);
+        border-radius: 10px;
+        background: var(--panel);
+        padding: 22px 24px;
+      }
+      .pend-head {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: baseline;
+      }
+      .pend-head h3 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 600;
+      }
+      .pend-head .v {
+        font-size: 34px;
+        font-weight: 800;
+        color: var(--cool);
+        letter-spacing: -0.02em;
+      }
+      .track {
+        position: relative;
+        height: 74px;
+        margin: 26px 0 8px;
+        border-bottom: 1px solid var(--line-2);
+      }
+      .track .tick {
+        position: absolute;
+        bottom: -1px;
+        width: 1px;
+        height: 8px;
+        background: var(--line-2);
+      }
+      .track .tick span {
+        position: absolute;
+        top: 12px;
+        left: -12px;
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--dim);
+        white-space: nowrap;
+      }
+      .track .pin {
+        position: absolute;
+        bottom: 0;
+        width: 2px;
+        background: var(--cool);
+        transform: translateX(-1px);
+      }
+      .track .pin::after {
+        content: "";
+        position: absolute;
+        top: -5px;
+        left: -4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--ink);
+        border: 2px solid var(--cool);
+      }
+      .track .now {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 100%;
+        width: 2px;
+        background: var(--brass);
+      }
+      .track .now span {
+        position: absolute;
+        top: -2px;
+        left: 6px;
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--brass);
+      }
+      .pend-list {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 8px;
+        margin-top: 34px;
+      }
+      @media (max-width: 860px) {
+        .pend-list {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      .pend-list div {
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 10px 12px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--dim);
+      }
+      .pend-list b {
+        display: block;
+        color: var(--cool);
+        font-size: 15px;
+        font-weight: 500;
+        margin-top: 2px;
+      }
+
+      /* phone */
+      .phone-stage {
+        display: flex;
+        gap: 48px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .phone {
+        width: 375px;
+        max-width: 100%;
+        border: 10px solid #050a14;
+        border-radius: 44px;
+        background: var(--ink);
+        overflow: hidden;
+        box-shadow:
+          0 0 0 1px var(--line-2),
+          0 40px 80px -30px rgba(0, 0, 0, 0.7);
+      }
+      .phone .notch {
+        height: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 24px;
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .phone .in {
+        padding: 8px 16px 24px;
+      }
+      .m-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0 14px;
+        border-bottom: 1px solid var(--line);
+      }
+      .m-tot {
+        margin-top: 16px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--ink-2);
+        padding: 18px;
+      }
+      .m-tot .v {
+        font-size: 46px;
+        font-weight: 800;
+        color: var(--brass-hi);
+        letter-spacing: -0.035em;
+        line-height: 1;
+        margin: 10px 0 4px;
+      }
+      .m-split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1px;
+        background: var(--line);
+        border-top: 1px solid var(--line);
+        margin: 16px -18px -18px;
+      }
+      .m-split div {
+        background: var(--ink-2);
+        padding: 12px 18px;
+        font-family: var(--mono);
+        font-size: 10px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .m-split b {
+        display: block;
+        font-family: var(--display);
+        font-size: 20px;
+        color: var(--text);
+        text-transform: none;
+        letter-spacing: -0.01em;
+        margin-top: 2px;
+      }
+      .m-ping {
+        margin-top: 14px;
+        border: 1px solid var(--brass-lo);
+        border-radius: 10px;
+        background: var(--panel);
+        padding: 14px;
+      }
+      .m-ping .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+      }
+      .m-ping .btn {
+        width: 100%;
+        margin-top: 14px;
+        padding: 15px;
+      }
+      .m-pend {
+        margin-top: 14px;
+        border: 1px solid var(--cool-lo);
+        border-radius: 10px;
+        background: var(--panel);
+        padding: 14px;
+      }
+      .m-pend ol {
+        list-style: none;
+        margin: 10px 0 0;
+        padding: 0;
+      }
+      .m-pend li {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--mono);
+        font-size: 12px;
+        padding: 8px 0;
+        border-top: 1px dashed var(--line);
+        color: var(--muted);
+      }
+      .m-pend li b {
+        color: var(--cool);
+        font-weight: 500;
+      }
+      .notes {
+        flex: 1;
+        min-width: 260px;
+        color: var(--muted);
+        font-size: 15px;
+      }
+      .notes h3 {
+        color: var(--text);
+        font-size: 20px;
+        margin: 0 0 10px;
+      }
+      .notes ul {
+        padding-left: 18px;
+        margin: 0;
+      }
+      .notes li {
+        margin-bottom: 8px;
+      }
+      footer.site {
+        padding: 40px 0 60px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--dim);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .sweep,
+        .blip {
+          animation: none;
+        }
+        .blip {
+          opacity: 0.8;
+        }
+        .meter i {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <symbol id="mark" viewBox="0 0 32 32">
+          <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="1.6" />
+          <circle
+            cx="16"
+            cy="16"
+            r="8.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+            opacity=".55"
+          />
+          <path d="M16 16 L16 2 A14 14 0 0 1 28.1 9 Z" fill="currentColor" opacity=".9" />
+          <circle cx="21.5" cy="20.5" r="2.2" fill="currentColor" />
+        </symbol>
+        <linearGradient id="wedge" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#CDA45E" stop-opacity="0" />
+          <stop offset="1" stop-color="#CDA45E" stop-opacity=".32" />
+        </linearGradient>
+      </defs>
+    </svg>
+
+    <div class="wrap">
+      <nav aria-label="Primary">
+        <div class="logo">
+          <svg width="26" height="26" style="color: var(--brass)"><use href="#mark" /></svg>Reclaim
+        </div>
+        <div class="navlinks">
+          <span>How it works</span><span>Detectors</span><span>Safety</span><span>Docs</span>
+        </div>
+        <button class="btn ghost sm">Connect wallet</button>
+      </nav>
+
+      <!-- 01 HERO -->
+      <section class="block" aria-labelledby="s1">
+        <div class="spec" id="s1"><b>01</b> Landing / idle</div>
+        <div class="hero">
+          <div>
+            <div class="kicker">Recovery instrument · on Robinhood Chain</div>
+            <h1>Sweep your wallet.<br />Find what you <em>left behind.</em></h1>
+            <p class="lede">
+              Reclaim scans your history for unclaimed bridge withdrawals and failed deposits, then
+              walks you through getting the funds back. Read-only. No wallet needed to look.
+            </p>
+            <form class="form" onsubmit="return false;">
+              <label for="addr">Wallet address or ENS</label>
+              <input
+                id="addr"
+                placeholder="0x… or name.eth"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button class="btn">Scan</button>
+            </form>
+            <div class="trustrow">
+              <span>Non-custodial</span><span>Simulated before you sign</span
+              ><span>No token approvals</span><span>No fee</span>
+            </div>
+          </div>
+
+          <div class="housing" aria-label="Detector idle sweep">
+            <div class="screws"><i></i><i></i><i></i><i></i></div>
+            <div class="hdr"><span>RCL-01 · Detector</span><span class="live">● Standby</span></div>
+            <svg
+              class="dial"
+              viewBox="0 0 400 400"
+              role="img"
+              aria-label="Radial sweep display, idle"
+            >
+              <g fill="none" stroke="#26344F">
+                <circle cx="200" cy="200" r="180" />
+                <circle cx="200" cy="200" r="135" />
+                <circle cx="200" cy="200" r="90" />
+                <circle cx="200" cy="200" r="45" />
+                <line x1="20" y1="200" x2="380" y2="200" />
+                <line x1="200" y1="20" x2="200" y2="380" />
+              </g>
+              <g id="ticks1" stroke="#33446A"></g>
+              <g class="sweep">
+                <path
+                  d="M200 200 L200 20 A180 180 0 0 1 327.3 72.7 Z"
+                  fill="url(#wedge)"
+                  transform="rotate(-45 200 200)"
+                />
+                <line x1="200" y1="200" x2="200" y2="20" stroke="#CDA45E" stroke-width="1.5" />
+              </g>
+              <circle cx="200" cy="200" r="5" fill="#CDA45E" />
+              <g font-family="JetBrains Mono" font-size="10" fill="#76839C">
+                <text x="206" y="34">000°</text>
+                <text x="352" y="196">090°</text>
+                <text x="206" y="374">180°</text>
+                <text x="26" y="196">270°</text>
+              </g>
+            </svg>
+            <div class="readout">
+              <div>Chain<b>4663</b></div>
+              <div>Channels<b>3 armed</b></div>
+              <div>Mode<b>Read-only</b></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 02 HOW -->
+      <section class="block" aria-labelledby="s2">
+        <div class="spec" id="s2"><b>02</b> How it works / what it finds</div>
+        <h2>Three detectors. One pass. Nothing moves until you sign.</h2>
+        <div class="cols3">
+          <div class="cell">
+            <div class="n">STEP 01</div>
+            <h3>Paste an address</h3>
+            <p>
+              Any address on Robinhood Chain. The scan is read-only, so you don't need to connect a
+              wallet to look.
+            </p>
+          </div>
+          <div class="cell">
+            <div class="n">STEP 02</div>
+            <h3>Sweep the history</h3>
+            <p>
+              Each detector reads its own channel of bridge and chain data and pings when it finds
+              something.
+            </p>
+          </div>
+          <div class="cell">
+            <div class="n">STEP 03</div>
+            <h3>Review, then claim</h3>
+            <p>
+              Every claim is simulated first. You see the contract, where funds go and the gas
+              before you sign.
+            </p>
+          </div>
+        </div>
+        <div class="channels-def">
+          <div class="chdef">
+            <span class="tag"><i></i>CH-1 · Withdrawals</span>
+            <h3>Unclaimed bridge withdrawals</h3>
+            <p>
+              Robinhood Chain → Ethereum withdrawals that were started but never finalized on
+              Ethereum.
+            </p>
+            <div class="meta">Claimable now, or pending through the ~6.4-day challenge period</div>
+          </div>
+          <div class="chdef cool">
+            <span class="tag"><i></i>CH-2 · Deposits</span>
+            <h3>Failed deposits</h3>
+            <p>
+              Ethereum → Robinhood Chain deposits whose auto-redeem failed. These have to be
+              redeemed manually.
+            </p>
+            <div class="meta" style="color: var(--warn)">
+              Redeem within 7 days or the funds are lost
+            </div>
+          </div>
+          <div class="chdef neutral">
+            <span class="tag"><i></i>CH-3 · Balances</span>
+            <h3>Wallet balances</h3>
+            <p>Shown for context so you see the full picture. Not counted as recovered.</p>
+            <div class="tokens">
+              <span>ETH</span><span>WETH</span><span>USDC</span><span>USDT</span><span>WBTC</span
+              ><span>LINK</span><span>UNI</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 03 SCANNING -->
+      <section class="block" aria-labelledby="s3">
+        <div class="spec" id="s3"><b>03</b> Scan in progress</div>
+        <div class="scan">
+          <div class="housing">
+            <div class="screws"><i></i><i></i><i></i><i></i></div>
+            <div class="hdr"><span>0x380c…de79</span><span class="live">● Sweeping</span></div>
+            <svg
+              class="dial"
+              viewBox="0 0 400 400"
+              role="img"
+              aria-label="Radial sweep display, scanning, one ping found"
+            >
+              <g fill="none" stroke="#26344F">
+                <circle cx="200" cy="200" r="180" />
+                <circle cx="200" cy="200" r="135" />
+                <circle cx="200" cy="200" r="90" />
+                <circle cx="200" cy="200" r="45" />
+                <line x1="20" y1="200" x2="380" y2="200" />
+                <line x1="200" y1="20" x2="200" y2="380" />
+              </g>
+              <g id="ticks2" stroke="#33446A"></g>
+              <g class="sweep fast">
+                <path
+                  d="M200 200 L200 20 A180 180 0 0 1 327.3 72.7 Z"
+                  fill="url(#wedge)"
+                  transform="rotate(-45 200 200)"
+                />
+                <line x1="200" y1="200" x2="200" y2="20" stroke="#CDA45E" stroke-width="1.5" />
+              </g>
+              <g>
+                <circle cx="296" cy="128" r="14" fill="none" stroke="#CDA45E" opacity=".5" />
+                <circle cx="296" cy="128" r="5" fill="#E6C78E" />
+                <text x="314" y="124" font-family="JetBrains Mono" font-size="10" fill="#E6C78E">
+                  WD #41,207
+                </text>
+                <text x="314" y="137" font-family="JetBrains Mono" font-size="10" fill="#A3AEC2">
+                  blk 18,402,113
+                </text>
+              </g>
+              <g class="blip" style="animation-delay: 1.2s">
+                <circle cx="118" cy="262" r="4" fill="#8CC3D6" />
+              </g>
+              <circle cx="200" cy="200" r="5" fill="#CDA45E" />
+            </svg>
+            <div class="readout">
+              <div>Blocks<b class="mono" id="blk">18,402,113</b></div>
+              <div>Pings<b>1</b></div>
+              <div>Elapsed<b id="el">00:07</b></div>
+            </div>
+          </div>
+          <div>
+            <div class="chan">
+              <div class="chan-top">
+                <h4><span class="ch">CH-1</span>Bridge withdrawals</h4>
+                <span class="state">● Ping</span>
+              </div>
+              <div class="meter" data-m="1"></div>
+              <div class="log" id="log1"></div>
+              <div class="prog"><span>Outbox · L2→L1</span><span id="p1">62%</span></div>
+            </div>
+            <div class="chan">
+              <div class="chan-top">
+                <h4><span class="ch">CH-2</span>Failed deposits</h4>
+                <span class="state cool">● Listening</span>
+              </div>
+              <div class="meter cool" data-m="2"></div>
+              <div class="log" id="log2"></div>
+              <div class="prog"><span>Retryable tickets · L1→L2</span><span id="p2">38%</span></div>
+            </div>
+            <div class="chan">
+              <div class="chan-top">
+                <h4><span class="ch">CH-3</span>Wallet balances</h4>
+                <span class="state done">✓ Complete</span>
+              </div>
+              <div class="meter" data-m="3"></div>
+              <div class="log">
+                <div>ETH 0.083169 · $196.02</div>
+                <div>WETH · USDC · USDT · WBTC · LINK · UNI — 0</div>
+                <div>Not counted as recovered</div>
+              </div>
+              <div class="prog"><span>7 tokens</span><span>100%</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 04 RESULTS -->
+      <section class="block" aria-labelledby="s4">
+        <div class="spec" id="s4"><b>04</b> Results + claim review</div>
+        <div class="res-head">
+          <div>
+            <div class="kicker">Sweep complete · 1 ping</div>
+            <h2 style="margin: 10px 0 0">We found $477.86 you can claim.</h2>
+          </div>
+          <div class="addr">Address <b>0x380c…de79</b> · Robinhood Chain</div>
+        </div>
+        <div class="totals">
+          <div class="tot main">
+            <div class="lbl"><i style="background: var(--brass)"></i>Claimable now</div>
+            <div class="v">$477.86</div>
+            <div class="s">1 withdrawal · 0.202753 ETH</div>
+          </div>
+          <div class="tot">
+            <div class="lbl"><i style="background: var(--cool)"></i>Pending</div>
+            <div class="v">$0</div>
+            <div class="s">Nothing in challenge period</div>
+          </div>
+          <div class="tot">
+            <div class="lbl"><i style="background: var(--dim)"></i>Already in wallet</div>
+            <div class="v" style="color: var(--muted)">$196.02</div>
+            <div class="s">0.083169 ETH · not counted</div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div>
+            <article class="pingcard" aria-label="Claimable withdrawal">
+              <div class="bar"><span>● Ping · CH-1</span><span>Claimable now</span></div>
+              <div class="body">
+                <svg width="52" height="52" viewBox="0 0 52 52" aria-hidden="true">
+                  <circle cx="26" cy="26" r="24" fill="none" stroke="#8E6E37" />
+                  <circle cx="26" cy="26" r="14" fill="none" stroke="#8E6E37" opacity=".6" />
+                  <circle cx="26" cy="26" r="5" fill="#E6C78E" />
+                </svg>
+                <div>
+                  <div class="amt">
+                    0.202753 ETH <small>≈ $477.86 · net $477.80 after gas</small>
+                  </div>
+                  <div class="route">Robinhood Chain → Ethereum withdrawal</div>
+                </div>
+                <button class="btn">Claim</button>
+              </div>
+              <dl class="coords" style="padding: 0 18px 18px; margin: 0">
+                <dt>Withdrawal</dt>
+                <dd>#41,207</dd>
+                <dt>L2 block</dt>
+                <dd>18,402,113</dd>
+                <dt>Status</dt>
+                <dd style="color: var(--brass-hi)">Challenge period passed</dd>
+              </dl>
+              <div class="wallet"><span>CH-3 · In wallet</span><b>0.083169 ETH · $196.02</b></div>
+            </article>
+          </div>
+
+          <div class="modal" role="dialog" aria-labelledby="mh">
+            <header>
+              <h4 id="mh">Review claim</h4>
+              <span>WD #41,207</span>
+            </header>
+            <div class="recv">
+              <div class="lbl">You receive</div>
+              <div class="big"><span>0.202753</span> ETH</div>
+              <div class="mono" style="font-size: 12px; color: var(--muted)">
+                ≈ $477.86 on Ethereum
+              </div>
+            </div>
+            <dl class="kv">
+              <div>
+                <dt>Contract called</dt>
+                <dd>Outbox · executeTransaction</dd>
+              </div>
+              <div>
+                <dt>Funds go to</dt>
+                <dd>0x380c…de79 (you)</dd>
+              </div>
+              <div>
+                <dt>Simulation</dt>
+                <dd class="pass">✓ Passed</dd>
+              </div>
+              <div>
+                <dt>Token approvals</dt>
+                <dd>None</dd>
+              </div>
+              <div>
+                <dt>Network fee</dt>
+                <dd>gas ≈ $0.03</dd>
+              </div>
+              <div>
+                <dt>Reclaim fee</dt>
+                <dd>$0</dd>
+              </div>
+            </dl>
+            <footer>
+              <button class="btn ghost sm">Cancel</button><button class="btn sm">Claim</button>
+            </footer>
+            <p class="fine">
+              Simulated against current Ethereum state. Your wallet will ask you to confirm.
+            </p>
+          </div>
+        </div>
+
+        <div class="pending" aria-label="Second wallet pending withdrawals">
+          <div class="pend-head">
+            <div>
+              <div class="kicker" style="color: var(--cool)">Example wallet B · CH-1 pending</div>
+              <h3>6 withdrawals in challenge period</h3>
+            </div>
+            <div class="v">$1,932.51</div>
+          </div>
+          <div class="track" id="track" aria-hidden="true">
+            <div class="now"><span>NOW</span></div>
+          </div>
+          <div class="pend-list">
+            <div>#1<b>19h</b></div>
+            <div>#2<b>1d 19h</b></div>
+            <div>#3<b>2d 19h</b></div>
+            <div>#4<b>4d 1h</b></div>
+            <div>#5<b>5d 7h</b></div>
+            <div>#6<b>6d 7h</b></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 05 MOBILE -->
+      <section class="block" aria-labelledby="s5">
+        <div class="spec" id="s5"><b>05</b> Mobile results · 375px</div>
+        <div class="phone-stage">
+          <div class="phone">
+            <div class="notch"><span>9:41</span><span>●●●</span></div>
+            <div class="in">
+              <div class="m-nav">
+                <div class="logo" style="font-size: 17px">
+                  <svg width="22" height="22" style="color: var(--brass)"><use href="#mark" /></svg
+                  >Reclaim
+                </div>
+                <span class="mono" style="font-size: 11px; color: var(--muted)">0x380c…de79</span>
+              </div>
+              <div class="m-tot">
+                <div class="tot" style="padding: 0; background: none">
+                  <div class="lbl"><i style="background: var(--brass)"></i>Claimable now</div>
+                </div>
+                <div class="v">$477.86</div>
+                <div class="mono" style="font-size: 11px; color: var(--dim)">
+                  Sweep complete · 1 ping
+                </div>
+                <div class="m-split">
+                  <div>Pending<b>$0</b></div>
+                  <div>In wallet<b style="color: var(--muted)">$196.02</b></div>
+                </div>
+              </div>
+              <div class="m-ping">
+                <div
+                  class="mono"
+                  style="font-size: 10px; letter-spacing: 0.12em; color: var(--brass)"
+                >
+                  ● PING · WD #41,207 · BLK 18,402,113
+                </div>
+                <div class="row" style="margin-top: 10px">
+                  <div class="amt" style="font-size: 24px">0.202753 ETH</div>
+                  <span class="mono" style="font-size: 12px; color: var(--muted)">$477.86</span>
+                </div>
+                <div class="route">Robinhood Chain → Ethereum · net $477.80</div>
+                <button class="btn">Claim</button>
+                <div
+                  class="mono"
+                  style="font-size: 10px; color: var(--dim); text-align: center; margin-top: 10px"
+                >
+                  Simulated · no approvals · gas ≈ $0.03
+                </div>
+              </div>
+              <div class="m-pend">
+                <div
+                  class="row"
+                  style="display: flex; justify-content: space-between; align-items: baseline"
+                >
+                  <span
+                    class="mono"
+                    style="font-size: 10px; letter-spacing: 0.12em; color: var(--cool)"
+                    >WALLET B · 6 PENDING</span
+                  ><b style="font-size: 20px; color: var(--cool)">$1,932.51</b>
+                </div>
+                <ol>
+                  <li><span>#1</span><b>19h</b></li>
+                  <li><span>#2</span><b>1d 19h</b></li>
+                  <li><span>#3</span><b>2d 19h</b></li>
+                  <li><span>#4</span><b>4d 1h</b></li>
+                  <li><span>#5</span><b>5d 7h</b></li>
+                  <li><span>#6</span><b>6d 7h</b></li>
+                </ol>
+              </div>
+            </div>
+          </div>
+          <div class="notes">
+            <h3>System notes</h3>
+            <ul>
+              <li>
+                <b style="color: var(--brass)">Brass</b> means recoverable now. Only one brass
+                button per screen.
+              </li>
+              <li>
+                <b style="color: var(--cool)">Steel blue</b> means pending, locked by the challenge
+                period.
+              </li>
+              <li>Grey is context, like wallet balances that aren't counted.</li>
+              <li>
+                Mono readouts carry the coordinates (withdrawal #, block) so anyone can verify a
+                ping on an explorer.
+              </li>
+              <li>
+                Motion is limited to the sweep arm and meters, and both stop under reduced motion.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <footer class="site">
+        <span>Reclaim · Concept C “Sonar” · independent tool, not affiliated with Robinhood</span
+        ><span>Non-custodial · no fee</span>
+      </footer>
+    </div>
+
+    <script>
+      (function () {
+        const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        // dial ticks
+        ["ticks1", "ticks2"].forEach((id) => {
+          const g = document.getElementById(id);
+          let s = "";
+          for (let a = 0; a < 360; a += 5) {
+            const r = (a * Math.PI) / 180,
+              l = a % 30 ? 6 : 12;
+            const x1 = 200 + 180 * Math.sin(r),
+              y1 = 200 - 180 * Math.cos(r),
+              x2 = 200 + (180 - l) * Math.sin(r),
+              y2 = 200 - (180 - l) * Math.cos(r);
+            s += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+          }
+          g.innerHTML = s;
+        });
+        // meters
+        document.querySelectorAll(".meter").forEach((m) => {
+          for (let i = 0; i < 28; i++) m.appendChild(document.createElement("i"));
+        });
+        function paint(m, level) {
+          [...m.children].forEach((b, i) => {
+            const h = 20 + Math.abs(Math.sin(i * 0.7 + level)) * 80 * (i / 28 < level ? 1 : 0.35);
+            b.style.height = h + "%";
+            b.classList.toggle("on", i / 28 < level);
+          });
+        }
+        const m1 = document.querySelector('[data-m="1"]'),
+          m2 = document.querySelector('[data-m="2"]'),
+          m3 = document.querySelector('[data-m="3"]');
+        paint(m1, 0.62);
+        paint(m2, 0.38);
+        paint(m3, 1);
+        // logs
+        const l1 = [
+          ["blk 18,401,880 · scanning outbox", ""],
+          ["blk 18,402,113 · WD #41,207 · 0.202753 ETH", "hit"],
+          ["proof ok · challenge period passed", "hit"],
+          ["blk 18,402,640 · scanning outbox", ""],
+        ];
+        const l2 = [
+          ["L1 blk 21,904,212 · ticket check", ""],
+          ["L1 blk 21,904,770 · no failed redeem", ""],
+          ["L1 blk 21,905,031 · ticket check", "pend"],
+          ["L1 blk 21,905,388 · no failed redeem", ""],
+        ];
+        function fill(el, arr, n) {
+          el.innerHTML = arr
+            .slice(Math.max(0, n - 3), n)
+            .map(([t, c]) => `<div class="${c}">${t}</div>`)
+            .join("");
+        }
+        const e1 = document.getElementById("log1"),
+          e2 = document.getElementById("log2");
+        fill(e1, l1, 3);
+        fill(e2, l2, 3);
+        // pending track
+        const tr = document.getElementById("track"),
+          max = 6.4 * 24;
+        [
+          [0, "0d"],
+          [48, "2d"],
+          [96, "4d"],
+          [144, "6d"],
+          [max, "6.4d"],
+        ].forEach(([h, t]) => {
+          const d = document.createElement("div");
+          d.className = "tick";
+          d.style.left = (h / max) * 100 + "%";
+          d.innerHTML = `<span>${t}</span>`;
+          tr.appendChild(d);
+        });
+        [19, 43, 67, 97, 127, 151].forEach((h, i) => {
+          const p = document.createElement("div");
+          p.className = "pin";
+          p.style.left = (h / max) * 100 + "%";
+          p.style.height = 28 + (i % 3) * 14 + "px";
+          tr.appendChild(p);
+        });
+        if (reduce) return;
+        let t = 0,
+          blk = 18402113,
+          i1 = 3,
+          i2 = 3,
+          lv1 = 0.62,
+          lv2 = 0.38;
+        setInterval(() => {
+          t++;
+          blk += Math.floor(Math.random() * 40 + 20);
+          document.getElementById("blk").textContent = blk.toLocaleString("en-US");
+          const s = 7 + Math.floor(t / 2);
+          document.getElementById("el").textContent = "00:" + String(s % 60).padStart(2, "0");
+          lv1 = Math.min(0.98, lv1 + 0.01);
+          lv2 = Math.min(0.98, lv2 + 0.015);
+          paint(m1, lv1 + Math.random() * 0.02);
+          paint(m2, lv2 + Math.random() * 0.02);
+          document.getElementById("p1").textContent = Math.round(lv1 * 100) + "%";
+          document.getElementById("p2").textContent = Math.round(lv2 * 100) + "%";
+          if (t % 3 === 0) {
+            i1 = (i1 % l1.length) + 1;
+            fill(e1, l1.concat(l1), i1 + 1);
+          }
+          if (t % 2 === 0) {
+            i2 = (i2 % l2.length) + 1;
+            fill(e2, l2.concat(l2), i2 + 1);
+          }
+          if (lv1 >= 0.98) {
+            lv1 = 0.4;
+          }
+          if (lv2 >= 0.98) {
+            lv2 = 0.3;
+          }
+        }, 500);
+      })();
+    </script>
+  </body>
+</html>

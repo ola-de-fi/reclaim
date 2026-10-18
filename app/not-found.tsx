@@ -3,19 +3,21 @@ import { SiteHeader } from "@/components/site-header";
 
 export default function NotFound() {
   return (
-    <div className="mx-auto flex min-h-dvh max-w-3xl flex-col px-4 sm:px-6">
+    <div className="mx-auto flex min-h-dvh max-w-6xl flex-col px-4 sm:px-6 lg:px-8">
       <SiteHeader />
-      <main className="flex flex-1 flex-col items-start justify-center gap-4 py-14">
-        <p className="font-mono text-xs text-zinc-500">404</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Page not found</h1>
-        <p className="max-w-md text-pretty text-zinc-400">
+      <main className="flex flex-1 flex-col items-start justify-center gap-5 py-14">
+        <span className="stamp text-stamp-ink">Not on file · 404</span>
+        <h1 className="font-serif text-5xl leading-none tracking-tight text-ink sm:text-6xl">
+          No such <em className="text-stamp">record</em>.
+        </h1>
+        <p className="max-w-md text-pretty text-ink-2">
           This page does not exist, or the address in the link is not a valid wallet address.
         </p>
         <Link
           href="/"
-          className="rounded-md border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-100 hover:border-zinc-700 focus-visible:outline-2 focus-visible:outline-accent"
+          className="border-[1.5px] border-ink bg-ink px-4 py-2.5 font-mono text-sm font-semibold tracking-wider text-card uppercase shadow-ledger hover:border-stamp hover:bg-stamp focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stamp"
         >
-          Back to scanner
+          Back to the counter →
         </Link>
       </main>
     </div>

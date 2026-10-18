@@ -1,0 +1,1725 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reclaim — Concept B, Swiss</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper: #f4f4f1;
+        --white: #ffffff;
+        --ink: #0a0a0a;
+        --ink2: #3b3b3b;
+        --mute: #5e5e5e;
+        --rule: #0a0a0a;
+        --hair: #cfcfca;
+        --sig: #d23c00; /* international orange; 4.7:1 vs white */
+        --sig-ink: #b23300; /* small orange text on paper */
+        --ok: #0a0a0a;
+        --col: calc((100% - 11 * 24px) / 12);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--paper);
+        color: var(--ink);
+        font-family: "Inter Tight", system-ui, sans-serif;
+        font-feature-settings:
+          "tnum" 1,
+          "ss01" 1;
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.35;
+      }
+      .mono {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px;
+        letter-spacing: 0.02em;
+      }
+      .wrap {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 0 40px;
+        position: relative;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        column-gap: 24px;
+      }
+      /* visible 12-col grid overlay */
+      .cols {
+        position: absolute;
+        inset: 0 40px;
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        column-gap: 24px;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .cols span {
+        border-left: 1px solid rgba(0, 0, 0, 0.055);
+        border-right: 1px solid rgba(0, 0, 0, 0.055);
+      }
+      .wrap > *:not(.cols) {
+        position: relative;
+        z-index: 1;
+      }
+
+      /* board labels between concept sections */
+      .board {
+        border-top: 6px solid var(--ink);
+        padding: 18px 0 0;
+        margin-top: 120px;
+      }
+      .board .grid {
+        align-items: baseline;
+      }
+      .board .n {
+        grid-column: 1/3;
+        font-weight: 900;
+        font-size: 15px;
+      }
+      .board .t {
+        grid-column: 3/10;
+        font-weight: 700;
+        font-size: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .board .m {
+        grid-column: 10/13;
+        text-align: right;
+        color: var(--mute);
+      }
+
+      /* header */
+      header {
+        padding: 28px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+      header .grid {
+        align-items: center;
+      }
+      .logo {
+        grid-column: 1/4;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font-weight: 900;
+        font-size: 22px;
+        letter-spacing: -0.03em;
+      }
+      .logo svg {
+        flex: none;
+      }
+      nav {
+        grid-column: 4/10;
+        display: flex;
+        gap: 28px;
+        font-weight: 500;
+        font-size: 14px;
+      }
+      nav a {
+        color: var(--ink);
+        text-decoration: none;
+      }
+      .hdr-r {
+        grid-column: 10/13;
+        text-align: right;
+      }
+
+      /* hero */
+      .hero {
+        padding: 72px 0 64px;
+      }
+      .kicker {
+        font-weight: 700;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .kicker b {
+        color: var(--sig-ink);
+      }
+      .h1 {
+        grid-column: 1/11;
+        font-weight: 900;
+        font-size: clamp(56px, 9vw, 148px);
+        line-height: 0.86;
+        letter-spacing: -0.055em;
+        margin-top: 28px;
+      }
+      .h1 em {
+        font-style: normal;
+        color: var(--sig);
+      }
+      .hero-sub {
+        grid-column: 1/6;
+        font-size: 21px;
+        line-height: 1.35;
+        margin-top: 44px;
+        font-weight: 500;
+      }
+      .hero-form {
+        grid-column: 7/13;
+        margin-top: 44px;
+      }
+      label.f {
+        display: block;
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 10px;
+      }
+      .field {
+        display: flex;
+        border: 2px solid var(--ink);
+        background: var(--white);
+      }
+      .field input {
+        flex: 1;
+        border: 0;
+        padding: 20px 18px;
+        font:
+          500 17px "JetBrains Mono",
+          monospace;
+        background: transparent;
+        color: var(--ink);
+        min-width: 0;
+      }
+      .field input:focus {
+        outline: 3px solid var(--sig);
+        outline-offset: 2px;
+      }
+      .btn {
+        border: 0;
+        background: var(--sig);
+        color: #fff;
+        font: 800 16px "Inter Tight";
+        padding: 0 30px;
+        cursor: pointer;
+        letter-spacing: 0.01em;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .btn:hover {
+        background: #a82f00;
+      }
+      .btn:focus-visible {
+        outline: 3px solid var(--ink);
+        outline-offset: 3px;
+      }
+      .btn.ink {
+        background: var(--ink);
+      }
+      .hint {
+        margin-top: 12px;
+        color: var(--mute);
+        font-size: 14px;
+      }
+      .trust {
+        grid-column: 1/13;
+        margin-top: 72px;
+        border-top: 1px solid var(--rule);
+      }
+      .trust .grid > div {
+        padding: 18px 0;
+        border-right: 1px solid var(--hair);
+        padding-right: 16px;
+      }
+      .trust .grid > div:last-child {
+        border-right: 0;
+      }
+      .trust .tn {
+        font-weight: 900;
+        font-size: 13px;
+      }
+      .trust .tt {
+        font-weight: 700;
+        font-size: 17px;
+        margin-top: 6px;
+      }
+      .trust .td {
+        font-size: 14px;
+        color: var(--ink2);
+        margin-top: 4px;
+      }
+
+      /* section heads */
+      .sh {
+        padding: 56px 0 28px;
+        border-bottom: 1px solid var(--rule);
+      }
+      .sh .num {
+        grid-column: 1/3;
+        font-weight: 900;
+        font-size: 96px;
+        line-height: 0.8;
+        letter-spacing: -0.06em;
+      }
+      .sh h2 {
+        grid-column: 3/9;
+        font-weight: 800;
+        font-size: 44px;
+        line-height: 1;
+        letter-spacing: -0.035em;
+      }
+      .sh p {
+        grid-column: 9/13;
+        font-size: 16px;
+        color: var(--ink2);
+        align-self: end;
+      }
+
+      /* how */
+      .steps .grid > div {
+        padding: 28px 0 32px;
+      }
+      .steps .s {
+        font-weight: 900;
+        font-size: 13px;
+        color: var(--sig-ink);
+      }
+      .steps h3 {
+        font-weight: 800;
+        font-size: 26px;
+        letter-spacing: -0.02em;
+        margin: 14px 0 10px;
+        line-height: 1.05;
+      }
+      .steps p {
+        font-size: 15px;
+        color: var(--ink2);
+        max-width: 34ch;
+      }
+      .finds {
+        border-top: 1px solid var(--rule);
+      }
+      .frow {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        column-gap: 24px;
+        border-bottom: 1px solid var(--hair);
+        padding: 26px 0;
+        align-items: start;
+      }
+      .frow .k {
+        grid-column: 1/2;
+        font-weight: 900;
+        font-size: 40px;
+        line-height: 0.9;
+        letter-spacing: -0.05em;
+      }
+      .frow h4 {
+        grid-column: 2/6;
+        font-weight: 800;
+        font-size: 24px;
+        letter-spacing: -0.02em;
+        line-height: 1.05;
+      }
+      .frow .d {
+        grid-column: 6/10;
+        font-size: 15px;
+        color: var(--ink2);
+      }
+      .frow .w {
+        grid-column: 10/13;
+        text-align: right;
+      }
+      .tag {
+        display: inline-block;
+        border: 1.5px solid var(--ink);
+        padding: 5px 9px;
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .tag.sig {
+        background: var(--sig);
+        border-color: var(--sig);
+        color: #fff;
+      }
+      .tag.ghost {
+        border-color: var(--mute);
+        color: var(--mute);
+      }
+
+      /* scanning */
+      .scan {
+        background: var(--white);
+        border: 1px solid var(--rule);
+        margin-top: 40px;
+      }
+      .scan-top {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        column-gap: 24px;
+        padding: 22px 28px;
+        border-bottom: 1px solid var(--rule);
+        align-items: baseline;
+      }
+      .scan-top .a {
+        grid-column: 1/6;
+        font: 500 15px "JetBrains Mono";
+      }
+      .scan-top .pr {
+        grid-column: 6/10;
+        font-weight: 700;
+      }
+      .scan-top .el {
+        grid-column: 10/13;
+        text-align: right;
+      }
+      .det {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        column-gap: 24px;
+        padding: 22px 28px;
+        border-bottom: 1px solid var(--hair);
+        align-items: center;
+      }
+      .det:last-child {
+        border-bottom: 0;
+      }
+      .det .i {
+        grid-column: 1/2;
+        font-weight: 900;
+        font-size: 28px;
+        letter-spacing: -0.04em;
+      }
+      .det .nm {
+        grid-column: 2/6;
+        font-weight: 700;
+        font-size: 18px;
+      }
+      .det .nm small {
+        display: block;
+        font-weight: 400;
+        font-size: 13px;
+        color: var(--mute);
+        margin-top: 3px;
+      }
+      .det .bar {
+        grid-column: 6/10;
+        height: 8px;
+        background: #e6e6e2;
+        position: relative;
+        overflow: hidden;
+      }
+      .det .bar i {
+        position: absolute;
+        inset: 0 auto 0 0;
+        background: var(--ink);
+      }
+      .det .bar.run i {
+        background: var(--sig);
+        animation: grow 2.4s ease-in-out infinite alternate;
+      }
+      @keyframes grow {
+        from {
+          width: 18%;
+        }
+        to {
+          width: 72%;
+        }
+      }
+      .det .st {
+        grid-column: 10/13;
+        text-align: right;
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .det .st.run {
+        color: var(--sig-ink);
+      }
+      .log {
+        padding: 16px 28px;
+        border-top: 1px solid var(--rule);
+        background: var(--paper);
+        color: var(--ink2);
+        line-height: 1.8;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .det .bar.run i {
+          animation: none;
+          width: 46%;
+        }
+      }
+
+      /* results */
+      .addr {
+        padding: 36px 0 0;
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        column-gap: 24px;
+        align-items: baseline;
+      }
+      .addr .l {
+        grid-column: 1/3;
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .addr .v {
+        grid-column: 3/9;
+        font: 500 22px "JetBrains Mono";
+      }
+      .addr .r {
+        grid-column: 9/13;
+        text-align: right;
+        color: var(--mute);
+        font-size: 14px;
+      }
+      .hero-num {
+        padding: 24px 0 8px;
+      }
+      .hero-num .lbl {
+        grid-column: 1/13;
+        font-weight: 800;
+        font-size: 15px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--sig-ink);
+      }
+      .big {
+        grid-column: 1/13;
+        font-weight: 900;
+        font-size: clamp(96px, 17vw, 248px);
+        line-height: 0.82;
+        letter-spacing: -0.065em;
+        margin-top: 12px;
+      }
+      .big sup {
+        font-size: 0.36em;
+        vertical-align: 0.95em;
+        letter-spacing: 0;
+        margin-right: 0.04em;
+      }
+      .big .c {
+        font-size: 0.42em;
+        letter-spacing: -0.04em;
+      }
+      .totals {
+        border-top: 6px solid var(--ink);
+        margin-top: 36px;
+      }
+      .totals .grid > div {
+        padding: 20px 0 24px;
+        border-right: 1px solid var(--hair);
+      }
+      .totals .grid > div:last-child {
+        border-right: 0;
+      }
+      .totals .k {
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .totals .v {
+        font-weight: 800;
+        font-size: 44px;
+        letter-spacing: -0.04em;
+        margin-top: 8px;
+        line-height: 1;
+      }
+      .totals .s {
+        font-size: 14px;
+        color: var(--mute);
+        margin-top: 6px;
+      }
+      .totals .on .v {
+        color: var(--sig);
+      }
+
+      table.tt {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+      table.tt th {
+        text-align: left;
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 12px 12px 12px 0;
+        border-bottom: 2px solid var(--ink);
+      }
+      table.tt td {
+        padding: 22px 12px 22px 0;
+        border-bottom: 1px solid var(--hair);
+        vertical-align: middle;
+        font-size: 16px;
+      }
+      table.tt .r {
+        text-align: right;
+      }
+      table.tt .amt {
+        font-weight: 800;
+        font-size: 28px;
+        letter-spacing: -0.03em;
+      }
+      table.tt .muted td {
+        color: var(--ink2);
+      }
+      .rt {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+      }
+      .rt svg {
+        flex: none;
+      }
+      .btn.sm {
+        padding: 14px 26px;
+        font-size: 15px;
+      }
+      .sub {
+        font-size: 13px;
+        color: var(--mute);
+        margin-top: 3px;
+        font-weight: 400;
+      }
+      .group-h {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-top: 56px;
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 10px;
+      }
+      .group-h h3 {
+        font-weight: 800;
+        font-size: 26px;
+        letter-spacing: -0.02em;
+      }
+
+      /* modal excerpt */
+      .modal-zone {
+        margin-top: 72px;
+        background: #1a1a1a;
+        padding: 56px 0;
+        position: relative;
+      }
+      .modal-zone .cap {
+        color: #bdbdbd;
+        font-size: 12px;
+        position: absolute;
+        top: 18px;
+        left: 40px;
+      }
+      .modal {
+        grid-column: 4/10;
+        background: var(--white);
+        border: 2px solid var(--ink);
+      }
+      .mh {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 26px;
+        border-bottom: 1px solid var(--rule);
+      }
+      .mh h3 {
+        font-weight: 800;
+        font-size: 20px;
+      }
+      .mh button {
+        background: none;
+        border: 0;
+        font: 700 14px "Inter Tight";
+        cursor: pointer;
+        color: var(--ink);
+        text-decoration: underline;
+      }
+      .mrecv {
+        padding: 28px 26px 22px;
+        border-bottom: 1px solid var(--hair);
+      }
+      .mrecv .k {
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .mrecv .v {
+        font-weight: 900;
+        font-size: 64px;
+        letter-spacing: -0.05em;
+        line-height: 0.95;
+        margin-top: 10px;
+      }
+      .mrecv .v small {
+        font-size: 26px;
+        letter-spacing: -0.02em;
+      }
+      .mrecv .s {
+        color: var(--ink2);
+        margin-top: 6px;
+      }
+      dl.kv {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        margin: 0 26px;
+      }
+      dl.kv dt,
+      dl.kv dd {
+        padding: 14px 0;
+        border-bottom: 1px solid var(--hair);
+        font-size: 14px;
+      }
+      dl.kv dt {
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.07em;
+        padding-top: 16px;
+      }
+      dl.kv dd {
+        font-family: "JetBrains Mono";
+        font-size: 13px;
+      }
+      .pass {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        font-family: "Inter Tight";
+        font-weight: 800;
+        font-size: 14px;
+      }
+      .mf {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 22px 26px;
+      }
+      .mf .n {
+        font-size: 13px;
+        color: var(--mute);
+        max-width: 30ch;
+      }
+      .btn.lg {
+        padding: 20px 42px;
+        font-size: 18px;
+      }
+
+      /* departure board */
+      .dep {
+        margin-top: 40px;
+        background: var(--white);
+        border: 1px solid var(--rule);
+      }
+      .dep-h {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        column-gap: 24px;
+        padding: 24px 28px;
+        border-bottom: 6px solid var(--ink);
+        align-items: end;
+      }
+      .dep-h .a {
+        grid-column: 1/5;
+      }
+      .dep-h .a .l {
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .dep-h .a .v {
+        font: 500 18px "JetBrains Mono";
+        margin-top: 6px;
+      }
+      .dep-h .t {
+        grid-column: 5/10;
+      }
+      .dep-h .t .v {
+        font-weight: 900;
+        font-size: 72px;
+        letter-spacing: -0.055em;
+        line-height: 0.85;
+      }
+      .dep-h .t .l {
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+      }
+      .dep-h .n {
+        grid-column: 10/13;
+        text-align: right;
+        font-size: 14px;
+        color: var(--ink2);
+      }
+      .axis {
+        display: grid;
+        grid-template-columns: 120px 150px 1fr 160px;
+        padding: 12px 28px;
+        border-bottom: 1px solid var(--rule);
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .axis .scale {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        padding-right: 4px;
+      }
+      .drow {
+        display: grid;
+        grid-template-columns: 120px 150px 1fr 160px;
+        padding: 0 28px;
+        border-bottom: 1px solid var(--hair);
+        align-items: center;
+        min-height: 64px;
+      }
+      .drow:last-child {
+        border-bottom: 0;
+      }
+      .drow .eta {
+        font-weight: 900;
+        font-size: 26px;
+        letter-spacing: -0.03em;
+      }
+      .drow .no {
+        font-family: "JetBrains Mono";
+        font-size: 12px;
+        color: var(--mute);
+      }
+      .drow .no b {
+        display: block;
+        font-family: "Inter Tight";
+        font-size: 15px;
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .track {
+        position: relative;
+        height: 64px;
+        margin-right: 24px;
+        background: repeating-linear-gradient(
+          90deg,
+          transparent 0 calc(100% / 7 - 1px),
+          var(--hair) calc(100% / 7 - 1px) calc(100% / 7)
+        );
+      }
+      .track .now {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--sig);
+      }
+      .track .line {
+        position: absolute;
+        left: 0;
+        top: 31px;
+        height: 2px;
+        background: var(--ink);
+      }
+      .track .pin {
+        position: absolute;
+        top: 22px;
+        width: 20px;
+        height: 20px;
+        background: var(--ink);
+        transform: translateX(-10px);
+      }
+      .track .pin.next {
+        background: var(--sig);
+      }
+      .drow .val {
+        text-align: right;
+        font-weight: 800;
+        font-size: 22px;
+        letter-spacing: -0.02em;
+      }
+      .drow .val small {
+        display: block;
+        font-weight: 400;
+        font-size: 12px;
+        color: var(--mute);
+        font-family: "JetBrains Mono";
+        letter-spacing: 0;
+      }
+      .drow.first {
+        background: #fff4ee;
+      }
+      .dep-f {
+        padding: 16px 28px;
+        border-top: 1px solid var(--rule);
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        color: var(--ink2);
+        gap: 24px;
+        flex-wrap: wrap;
+      }
+
+      /* phone */
+      .phone-zone {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        column-gap: 24px;
+        margin-top: 40px;
+        align-items: start;
+      }
+      .phone-notes {
+        grid-column: 1/5;
+      }
+      .phone-notes h3 {
+        font-weight: 800;
+        font-size: 26px;
+        letter-spacing: -0.02em;
+        line-height: 1.05;
+      }
+      .phone-notes ol {
+        margin-top: 20px;
+        list-style: none;
+        border-top: 1px solid var(--rule);
+      }
+      .phone-notes li {
+        padding: 14px 0;
+        border-bottom: 1px solid var(--hair);
+        font-size: 15px;
+        display: grid;
+        grid-template-columns: 40px 1fr;
+      }
+      .phone-notes li b {
+        font-weight: 900;
+      }
+      .phone {
+        grid-column: 6/10;
+        width: 375px;
+        border: 10px solid var(--ink);
+        border-radius: 36px;
+        background: var(--paper);
+        overflow: hidden;
+        justify-self: start;
+      }
+      .phone-zone .phone2 {
+        grid-column: 10/13;
+      }
+      .p-top {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 20px 8px;
+        font-weight: 700;
+        font-size: 13px;
+      }
+      .p-hdr {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 16px 14px;
+        border-bottom: 1px solid var(--ink);
+      }
+      .p-hdr .logo {
+        font-size: 18px;
+      }
+      .p-body {
+        padding: 0 16px 24px;
+      }
+      .p-addr {
+        display: flex;
+        justify-content: space-between;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--hair);
+        font-size: 12px;
+      }
+      .p-lbl {
+        font-weight: 800;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--sig-ink);
+        margin-top: 22px;
+      }
+      .p-big {
+        font-weight: 900;
+        font-size: 88px;
+        letter-spacing: -0.065em;
+        line-height: 0.85;
+        margin-top: 8px;
+      }
+      .p-big sup {
+        font-size: 32px;
+        vertical-align: 42px;
+        letter-spacing: 0;
+      }
+      .p-big .c {
+        font-size: 38px;
+        letter-spacing: -0.03em;
+      }
+      .p-tot {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border-top: 4px solid var(--ink);
+        margin-top: 20px;
+      }
+      .p-tot > div {
+        padding: 12px 0;
+      }
+      .p-tot > div + div {
+        border-left: 1px solid var(--hair);
+        padding-left: 12px;
+      }
+      .p-tot .k {
+        font-weight: 700;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .p-tot .v {
+        font-weight: 800;
+        font-size: 26px;
+        letter-spacing: -0.03em;
+        margin-top: 4px;
+      }
+      .p-item {
+        border-top: 2px solid var(--ink);
+        margin-top: 18px;
+        padding-top: 14px;
+      }
+      .p-item .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      .p-item .ty {
+        font-weight: 700;
+        font-size: 15px;
+      }
+      .p-item .am {
+        font-weight: 900;
+        font-size: 30px;
+        letter-spacing: -0.04em;
+      }
+      .p-item .meta {
+        font-size: 13px;
+        color: var(--ink2);
+        margin-top: 6px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .p-btn {
+        display: block;
+        width: 100%;
+        margin-top: 14px;
+        padding: 18px;
+        font-size: 17px;
+        justify-content: center;
+      }
+      .p-bal {
+        margin-top: 24px;
+        border-top: 1px solid var(--rule);
+      }
+      .p-bal .row {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--hair);
+        font-size: 14px;
+      }
+      .p-dep .row {
+        display: grid;
+        grid-template-columns: 62px 1fr 80px;
+        padding: 11px 0;
+        border-bottom: 1px solid var(--hair);
+        align-items: center;
+        font-size: 14px;
+      }
+      .p-dep .eta {
+        font-weight: 900;
+        font-size: 17px;
+      }
+      .p-dep .mini {
+        height: 2px;
+        background: var(--hair);
+        position: relative;
+      }
+      .p-dep .mini i {
+        position: absolute;
+        top: -5px;
+        width: 12px;
+        height: 12px;
+        background: var(--ink);
+        transform: translateX(-6px);
+      }
+      .p-dep .mini i.next {
+        background: var(--sig);
+      }
+      .p-dep .v {
+        text-align: right;
+        font-weight: 800;
+      }
+
+      footer {
+        margin-top: 120px;
+        border-top: 1px solid var(--rule);
+        padding: 28px 0 48px;
+        color: var(--mute);
+        font-size: 13px;
+      }
+
+      @media (max-width: 900px) {
+        .wrap {
+          padding: 0 16px;
+        }
+        .cols {
+          inset: 0 16px;
+        }
+        .grid > *,
+        .frow > *,
+        .det > *,
+        .scan-top > *,
+        .addr > *,
+        .dep-h > *,
+        .phone-zone > * {
+          grid-column: 1/-1 !important;
+          text-align: left !important;
+        }
+        .modal {
+          grid-column: 1/-1;
+        }
+        .axis,
+        .drow {
+          grid-template-columns: 70px 1fr 90px;
+        }
+        .axis .scale,
+        .track {
+          display: none;
+        }
+        .phone {
+          width: 100%;
+          max-width: 375px;
+        }
+        nav {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="cols" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span
+        ><span></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <!-- ========== 01 LANDING ========== -->
+      <div class="board" style="margin-top: 40px">
+        <div class="grid">
+          <div class="n">B / 01</div>
+          <div class="t">Landing — hero with address form</div>
+          <div class="m mono">1320 grid · 12 col · 24 gutter</div>
+        </div>
+      </div>
+
+      <header>
+        <div class="grid">
+          <div class="logo">
+            <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+              <rect width="30" height="30" fill="#0A0A0A" />
+              <path d="M8 22V8h8a4.5 4.5 0 0 1 0 9H8" fill="none" stroke="#fff" stroke-width="3" />
+              <path d="M15 17l7 5" stroke="#D23C00" stroke-width="3.4" />
+            </svg>
+            Reclaim
+          </div>
+          <nav aria-label="Primary">
+            <a href="#how">How it works</a><a href="#finds">What it finds</a
+            ><a href="#trust">Safety</a>
+          </nav>
+          <div class="hdr-r">
+            <button class="btn ink sm" style="padding: 12px 20px; font-size: 14px">
+              Connect wallet
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div class="grid">
+          <div class="kicker" style="grid-column: 1/13">
+            Recovery tool <b>/</b> on Robinhood Chain <b>/</b> Chain 4663
+          </div>
+          <h1 class="h1">Your crypto<br />is stuck.<br /><em>Get it back.</em></h1>
+          <p class="hero-sub">
+            Reclaim scans any address for unclaimed bridge withdrawals and failed deposits between
+            Robinhood Chain and Ethereum, then helps you recover them in one signed transaction.
+          </p>
+          <form class="hero-form" onsubmit="return false;">
+            <label class="f" for="addr">Wallet address — read-only scan</label>
+            <div class="field">
+              <input id="addr" value="0x380c…de79" spellcheck="false" autocomplete="off" /><button
+                class="btn"
+                type="submit"
+              >
+                Scan
+                <svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true">
+                  <path d="M0 7h16M10 1l6 6-6 6" stroke="#fff" stroke-width="2.4" fill="none" />
+                </svg>
+              </button>
+            </div>
+            <p class="hint">No wallet needed to scan. Connect only when you’re ready to claim.</p>
+          </form>
+          <div class="trust" id="trust">
+            <div class="grid">
+              <div style="grid-column: span 3">
+                <div class="tn">A</div>
+                <div class="tt">Non-custodial</div>
+                <div class="td">
+                  Funds move from the bridge straight to your wallet. We never hold them.
+                </div>
+              </div>
+              <div style="grid-column: span 3">
+                <div class="tn">B</div>
+                <div class="tt">Simulated first</div>
+                <div class="td">Every claim is simulated before you sign.</div>
+              </div>
+              <div style="grid-column: span 3">
+                <div class="tn">C</div>
+                <div class="tt">No approvals</div>
+                <div class="td">Reclaim never asks for token approvals.</div>
+              </div>
+              <div style="grid-column: span 3">
+                <div class="tn">D</div>
+                <div class="tt">No fee</div>
+                <div class="td">You pay network gas. Nothing else.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== 02 HOW / FINDS ========== -->
+      <div class="board" id="how">
+        <div class="grid">
+          <div class="n">B / 02</div>
+          <div class="t">How it works + what it finds</div>
+          <div class="m mono">numbered, flush-left</div>
+        </div>
+      </div>
+
+      <div class="sh">
+        <div class="grid">
+          <div class="num">01</div>
+          <h2>Three steps.<br />No custody.</h2>
+          <p>
+            Reading the chain is free and needs no signature. You sign only when there is something
+            to recover.
+          </p>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="grid">
+          <div style="grid-column: 1/5">
+            <div class="s">1.1</div>
+            <h3>Paste an address</h3>
+            <p>
+              Any Ethereum address. The scan is read-only — nothing to connect, nothing to sign.
+            </p>
+          </div>
+          <div style="grid-column: 5/9">
+            <div class="s">1.2</div>
+            <h3>Three detectors run</h3>
+            <p>
+              Withdrawals, failed deposits and wallet balances are checked in parallel across both
+              chains.
+            </p>
+          </div>
+          <div style="grid-column: 9/13">
+            <div class="s">1.3</div>
+            <h3>Review, simulate, sign</h3>
+            <p>
+              Each claim shows the contract called, where funds go, and a passed simulation before
+              you sign.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="sh" id="finds">
+        <div class="grid">
+          <div class="num">02</div>
+          <h2>What it finds</h2>
+          <p>Only the first two count toward “recovered.” Balances are shown for context.</p>
+        </div>
+      </div>
+      <div class="finds">
+        <div class="frow">
+          <div class="k">A</div>
+          <h4>Unclaimed withdrawals<br />Robinhood Chain → Ethereum</h4>
+          <div class="d">
+            Bridge withdrawals sit in a ~6.4-day challenge period, then wait for you to claim them
+            on Ethereum. Many never get claimed.
+          </div>
+          <div class="w">
+            <span class="tag sig">Claimable now</span> <span class="tag">Pending</span>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="k">B</div>
+          <h4>Failed deposits<br />Ethereum → Robinhood Chain</h4>
+          <div class="d">
+            A deposit whose auto-redeem failed must be redeemed manually within 7 days. After that,
+            it is lost.
+          </div>
+          <div class="w"><span class="tag sig">7-day deadline</span></div>
+        </div>
+        <div class="frow">
+          <div class="k">C</div>
+          <h4>Wallet balances</h4>
+          <div class="d">
+            ETH, WETH, USDC, USDT, WBTC, LINK, UNI already in the wallet. Shown, but not counted as
+            recovered.
+          </div>
+          <div class="w"><span class="tag ghost">Info only</span></div>
+        </div>
+      </div>
+
+      <!-- ========== 03 SCANNING ========== -->
+      <div class="board">
+        <div class="grid">
+          <div class="n">B / 03</div>
+          <div class="t">Scan in progress — 3 detectors streaming</div>
+          <div class="m mono">state: running</div>
+        </div>
+      </div>
+
+      <div class="scan" role="status" aria-live="polite">
+        <div class="scan-top">
+          <div class="a">0x380c…de79</div>
+          <div class="pr">Scanning — 2 of 3 detectors running</div>
+          <div class="el mono">00:07.4 elapsed</div>
+        </div>
+        <div class="det">
+          <div class="i">A</div>
+          <div class="nm">Bridge withdrawals<small>Robinhood Chain → Ethereum · outbox</small></div>
+          <div class="bar run"><i></i></div>
+          <div class="st run">Reading blocks 4.1M / 6.8M</div>
+        </div>
+        <div class="det">
+          <div class="i">B</div>
+          <div class="nm">
+            Failed deposits<small>Ethereum → Robinhood Chain · retryables</small>
+          </div>
+          <div class="bar run"><i style="animation-delay: -1.1s"></i></div>
+          <div class="st run">Checking 12 tickets</div>
+        </div>
+        <div class="det">
+          <div class="i">C</div>
+          <div class="nm">Wallet balances<small>7 tokens · both chains</small></div>
+          <div class="bar"><i style="width: 100%"></i></div>
+          <div class="st">Done — $196.02</div>
+        </div>
+        <div class="log mono">
+          07.1 &nbsp;withdrawal found · 0.202753 ETH · confirmed, claimable<br />06.8
+          &nbsp;balances: ETH 0.083169 · 6 tokens zero<br />03.2 &nbsp;RPC throttled, retrying in
+          800 ms
+        </div>
+      </div>
+
+      <!-- ========== 04 RESULTS ========== -->
+      <div class="board">
+        <div class="grid">
+          <div class="n">B / 04</div>
+          <div class="t">Results — wallet 0x380c…de79</div>
+          <div class="m mono">the $ figure is the hero</div>
+        </div>
+      </div>
+
+      <div class="addr">
+        <div class="l">Scanned</div>
+        <div class="v">0x380c…de79</div>
+        <div class="r">Scan complete · 3 / 3 detectors · 11.2 s</div>
+      </div>
+      <div class="hero-num">
+        <div class="grid">
+          <div class="lbl">Claimable now</div>
+          <div class="big" aria-label="477 dollars 86 cents">
+            <sup>$</sup>477<span class="c">.86</span>
+          </div>
+        </div>
+      </div>
+      <div class="totals">
+        <div class="grid">
+          <div class="on" style="grid-column: span 4">
+            <div class="k">01 — Claimable now</div>
+            <div class="v">$477.86</div>
+            <div class="s">1 withdrawal</div>
+          </div>
+          <div style="grid-column: span 4; padding-left: 0">
+            <div class="k">02 — Pending</div>
+            <div class="v">$0.00</div>
+            <div class="s">None in challenge period</div>
+          </div>
+          <div style="grid-column: span 4">
+            <div class="k">03 — Already in wallet</div>
+            <div class="v">$196.02</div>
+            <div class="s">0.083169 ETH · not counted</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="group-h">
+        <h3>01 — Claimable now</h3>
+        <span class="mono">1 item</span>
+      </div>
+      <table class="tt">
+        <thead>
+          <tr>
+            <th style="width: 34%">Route</th>
+            <th>Asset</th>
+            <th class="r">Amount</th>
+            <th class="r">Net after gas</th>
+            <th class="r" style="width: 150px">
+              <span class="sr" style="position: absolute; left: -9999px">Action</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="rt">
+                Robinhood Chain
+                <svg width="34" height="10" viewBox="0 0 34 10" aria-label="to">
+                  <path d="M0 5h31M27 1l4 4-4 4" stroke="#0A0A0A" stroke-width="2" fill="none" />
+                </svg>
+                Ethereum
+              </div>
+              <div class="sub">Bridge withdrawal · challenge period complete</div>
+            </td>
+            <td>0.202753 ETH</td>
+            <td class="r amt">$477.86</td>
+            <td class="r">$477.80</td>
+            <td class="r"><button class="btn sm">Claim</button></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="group-h">
+        <h3>03 — Already in wallet</h3>
+        <span class="mono">shown, not counted</span>
+      </div>
+      <table class="tt">
+        <tbody class="muted">
+          <tr>
+            <td style="width: 34%">Ethereum</td>
+            <td>0.083169 ETH</td>
+            <td class="r" style="font-weight: 700">$196.02</td>
+            <td class="r" style="width: 150px">—</td>
+          </tr>
+          <tr>
+            <td>Robinhood Chain</td>
+            <td>WETH · USDC · USDT · WBTC · LINK · UNI</td>
+            <td class="r">$0.00</td>
+            <td class="r">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- /wrap -->
+
+    <!-- modal excerpt -->
+    <div class="modal-zone">
+      <div class="cap mono">04.b — Claim review modal (excerpt)</div>
+      <div class="wrap">
+        <div class="grid">
+          <div class="modal" role="dialog" aria-labelledby="mtitle">
+            <div class="mh">
+              <h3 id="mtitle">Review claim</h3>
+              <button>Cancel</button>
+            </div>
+            <div class="mrecv">
+              <div class="k">You receive</div>
+              <div class="v">0.202753 <small>ETH</small></div>
+              <div class="s">≈ $477.86 · net $477.80 after gas</div>
+            </div>
+            <dl class="kv">
+              <dt>Contract called</dt>
+              <dd>
+                Outbox.executeTransaction()<br /><span style="color: var(--mute)"
+                  >Ethereum · bridge outbox</span
+                >
+              </dd>
+              <dt>Funds go to</dt>
+              <dd>
+                0x380c…de79
+                <span style="font-family: &quot;Inter Tight&quot;; color: var(--mute)"
+                  >(your wallet)</span
+                >
+              </dd>
+              <dt>Simulation</dt>
+              <dd>
+                <span class="pass"
+                  ><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                    <rect width="16" height="16" fill="#0A0A0A" />
+                    <path d="M4 8.5l2.6 2.5L12 5" stroke="#fff" stroke-width="2" fill="none" /></svg
+                  >Passed — balance +0.202753 ETH</span
+                >
+              </dd>
+              <dt>Network gas</dt>
+              <dd>≈ $0.03</dd>
+              <dt>Approvals</dt>
+              <dd>None requested</dd>
+            </dl>
+            <div class="mf">
+              <div class="n">No fee. You sign one transaction in your wallet.</div>
+              <button class="btn lg">Claim</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="cols" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span
+        ><span></span><span></span><span></span><span></span><span></span>
+      </div>
+
+      <div class="board">
+        <div class="grid">
+          <div class="n">B / 04.c</div>
+          <div class="t">Pending — departure board, second wallet</div>
+          <div class="m mono">axis: 7 days from now</div>
+        </div>
+      </div>
+
+      <div class="dep">
+        <div class="dep-h">
+          <div class="a">
+            <div class="l">Wallet</div>
+            <div class="v">0x9a41…07c2</div>
+          </div>
+          <div class="t">
+            <div class="l">Pending · 6 withdrawals</div>
+            <div class="v">$1,932.51</div>
+          </div>
+          <div class="n">
+            Each becomes claimable when its challenge period ends. We’ll show a Claim button the
+            moment it unlocks.
+          </div>
+        </div>
+        <div class="axis">
+          <div>Unlocks in</div>
+          <div>No.</div>
+          <div class="scale">
+            <span>Now</span><span>+1d</span><span>+2d</span><span>+3d</span><span>+4d</span
+            ><span>+5d</span><span>+6d</span><span>+7d</span>
+          </div>
+          <div style="text-align: right">Value</div>
+        </div>
+        <!-- left% = hours / 168 -->
+        <div class="drow first">
+          <div class="eta">19h</div>
+          <div class="no"><b>W-01</b>0.174891 ETH</div>
+          <div class="track">
+            <span class="now"></span><span class="line" style="width: 11.3%"></span
+            ><span class="pin next" style="left: 11.3%"></span>
+          </div>
+          <div class="val">$412.20<small>next</small></div>
+        </div>
+        <div class="drow">
+          <div class="eta">1d 19h</div>
+          <div class="no"><b>W-02</b>0.135241 ETH</div>
+          <div class="track">
+            <span class="now"></span><span class="line" style="width: 25.6%"></span
+            ><span class="pin" style="left: 25.6%"></span>
+          </div>
+          <div class="val">$318.75</div>
+        </div>
+        <div class="drow">
+          <div class="eta">2d 19h</div>
+          <div class="no"><b>W-03</b>0.121515 ETH</div>
+          <div class="track">
+            <span class="now"></span><span class="line" style="width: 39.9%"></span
+            ><span class="pin" style="left: 39.9%"></span>
+          </div>
+          <div class="val">$286.40</div>
+        </div>
+        <div class="drow">
+          <div class="eta">4d 1h</div>
+          <div class="no"><b>W-04</b>0.150689 ETH</div>
+          <div class="track">
+            <span class="now"></span><span class="line" style="width: 57.7%"></span
+            ><span class="pin" style="left: 57.7%"></span>
+          </div>
+          <div class="val">$355.16</div>
+        </div>
+        <div class="drow">
+          <div class="eta">5d 7h</div>
+          <div class="no"><b>W-05</b>0.101829 ETH</div>
+          <div class="track">
+            <span class="now"></span><span class="line" style="width: 75.6%"></span
+            ><span class="pin" style="left: 75.6%"></span>
+          </div>
+          <div class="val">$240.00</div>
+        </div>
+        <div class="drow">
+          <div class="eta">6d 7h</div>
+          <div class="no"><b>W-06</b>0.135772 ETH</div>
+          <div class="track">
+            <span class="now"></span><span class="line" style="width: 89.9%"></span
+            ><span class="pin" style="left: 89.9%"></span>
+          </div>
+          <div class="val">$320.00</div>
+        </div>
+        <div class="dep-f">
+          <span>Challenge period ≈ 6.4 days from withdrawal on Robinhood Chain.</span
+          ><span class="mono">Total $1,932.51 · 0.819937 ETH</span>
+        </div>
+      </div>
+
+      <!-- ========== 05 MOBILE ========== -->
+      <div class="board">
+        <div class="grid">
+          <div class="n">B / 05</div>
+          <div class="t">Mobile — results at 375 px</div>
+          <div class="m mono">single column, same hierarchy</div>
+        </div>
+      </div>
+
+      <div class="phone-zone">
+        <div class="phone-notes">
+          <h3>The number still leads.</h3>
+          <ol>
+            <li><b>1</b>Claimable figure at 88 px — nothing above it but the label.</li>
+            <li><b>2</b>Totals collapse to a 2-up strip under a heavy rule.</li>
+            <li><b>3</b>Full-width orange Claim — the only orange fill on screen.</li>
+            <li><b>4</b>Departure board keeps a mini-track per row.</li>
+          </ol>
+        </div>
+
+        <div class="phone" aria-label="Mobile results, wallet 1">
+          <div class="p-top"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="p-hdr">
+            <div class="logo">
+              <svg width="22" height="22" viewBox="0 0 30 30" aria-hidden="true">
+                <rect width="30" height="30" fill="#0A0A0A" />
+                <path
+                  d="M8 22V8h8a4.5 4.5 0 0 1 0 9H8"
+                  fill="none"
+                  stroke="#fff"
+                  stroke-width="3"
+                />
+                <path d="M15 17l7 5" stroke="#D23C00" stroke-width="3.4" /></svg
+              >Reclaim
+            </div>
+            <span class="mono">New scan</span>
+          </div>
+          <div class="p-body">
+            <div class="p-addr"><span class="mono">0x380c…de79</span><span>3 / 3 done</span></div>
+            <div class="p-lbl">Claimable now</div>
+            <div class="p-big"><sup>$</sup>477<span class="c">.86</span></div>
+            <div class="p-tot">
+              <div>
+                <div class="k">Pending</div>
+                <div class="v">$0.00</div>
+              </div>
+              <div>
+                <div class="k">In wallet</div>
+                <div class="v">$196.02</div>
+              </div>
+            </div>
+            <div class="p-item">
+              <div class="row"><span class="ty">Robinhood Chain → Ethereum</span></div>
+              <div class="row" style="margin-top: 6px">
+                <span class="mono">0.202753 ETH</span><span class="am">$477.86</span>
+              </div>
+              <div class="meta"><span>Withdrawal · claimable</span><span>Net $477.80</span></div>
+              <button class="btn p-btn">Claim</button>
+            </div>
+            <div class="p-bal">
+              <div class="row">
+                <b>Already in wallet</b><span style="color: var(--mute)">not counted</span>
+              </div>
+              <div class="row"><span>0.083169 ETH</span><b>$196.02</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="phone-zone" style="margin-top: 32px">
+        <div class="phone-notes">
+          <h3>Pending, on the phone.</h3>
+          <p style="margin-top: 14px; color: var(--ink2); font-size: 15px">
+            Second wallet. Countdown first, value last — read left to right like a timetable.
+          </p>
+        </div>
+        <div class="phone" aria-label="Mobile pending, wallet 2">
+          <div class="p-top"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="p-body">
+            <div class="p-addr"><span class="mono">0x9a41…07c2</span><span>6 pending</span></div>
+            <div class="p-lbl" style="color: var(--ink)">Pending</div>
+            <div class="p-big" style="font-size: 64px">
+              <sup style="font-size: 24px; vertical-align: 30px">$</sup>1,932<span
+                class="c"
+                style="font-size: 28px"
+                >.51</span
+              >
+            </div>
+            <div class="p-dep" style="margin-top: 18px; border-top: 4px solid var(--ink)">
+              <div class="row">
+                <span class="eta">19h</span
+                ><span class="mini"><i class="next" style="left: 11%"></i></span
+                ><span class="v">$412.20</span>
+              </div>
+              <div class="row">
+                <span class="eta">1d 19h</span><span class="mini"><i style="left: 26%"></i></span
+                ><span class="v">$318.75</span>
+              </div>
+              <div class="row">
+                <span class="eta">2d 19h</span><span class="mini"><i style="left: 40%"></i></span
+                ><span class="v">$286.40</span>
+              </div>
+              <div class="row">
+                <span class="eta">4d 1h</span><span class="mini"><i style="left: 58%"></i></span
+                ><span class="v">$355.16</span>
+              </div>
+              <div class="row">
+                <span class="eta">5d 7h</span><span class="mini"><i style="left: 76%"></i></span
+                ><span class="v">$240.00</span>
+              </div>
+              <div class="row">
+                <span class="eta">6d 7h</span><span class="mini"><i style="left: 90%"></i></span
+                ><span class="v">$320.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <div class="grid">
+          <div style="grid-column: 1/7">
+            Reclaim — Concept B, Swiss / International Typographic Style.
+          </div>
+          <div style="grid-column: 7/13; text-align: right" class="mono">
+            Inter Tight 400–900 · JetBrains Mono · Signal #D23C00
+          </div>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

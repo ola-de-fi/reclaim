@@ -35,7 +35,7 @@ export function ShareButton({
   if (!(claimableUsd + pendingUsd > 0)) return null;
 
   const btn =
-    "rounded border border-zinc-800 px-2 py-0.5 font-mono text-xs text-zinc-300 hover:border-zinc-700 hover:text-zinc-100";
+    "inline-flex items-center gap-1.5 border border-ink bg-card px-2 py-0.5 font-mono text-xs text-ink hover:bg-paper-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stamp";
 
   async function onShare() {
     const s = buildShare(window.location.origin, address, claimableUsd, pendingUsd);
@@ -69,6 +69,7 @@ export function ShareButton({
         onClick={onShare}
         title={`Share ${count} found position${count === 1 ? "" : "s"}`}
       >
+        <span className="size-1.5 bg-stamp" aria-hidden />
         Share
       </button>
       <button type="button" className={btn} onClick={onCopy}>

@@ -161,9 +161,14 @@ export function ClaimDialog({
   const busy =
     submitting || switching || send.isPending || (send.data !== undefined && receipt.isLoading);
 
+  const focusRing =
+    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stamp";
+  const row = "grid grid-cols-[7.5rem_1fr] gap-3 border-b border-rule py-2.5 last:border-b-0";
+  const key = "font-mono text-[11px] uppercase tracking-wider text-ink-3";
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 p-4"
       onClick={(e) => e.target === e.currentTarget && !busy && onClose()}
     >
       <div
@@ -173,32 +178,41 @@ export function ClaimDialog({
         aria-labelledby="claim-title"
         tabIndex={-1}
         onKeyDown={(e) => e.key === "Escape" && !busy && onClose()}
-        className="max-h-full w-full max-w-lg overflow-y-auto rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-200 focus:outline-none"
+        className="max-h-full w-full max-w-lg overflow-y-auto border-2 border-ink bg-card text-ink shadow-ledger focus:outline-none"
       >
-        <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-3">
-          <h2 id="claim-title" className="text-sm font-semibold">
-            Review claim
-          </h2>
+        <div className="flex items-center justify-between gap-3 border-b-2 border-ink bg-paper-2 px-5 py-2.5">
+          <span className="truncate font-mono text-[11px] uppercase tracking-[0.14em] text-ink-2">
+            Release form · Item {short(position.id)}
+          </span>
           <button
             onClick={() => onClose()}
             disabled={busy}
             aria-label="Close"
-            className="font-mono text-xs text-zinc-500 hover:text-zinc-300 disabled:opacity-40"
+            className={`shrink-0 font-mono text-xs uppercase tracking-wider text-ink-2 hover:text-ink disabled:opacity-40 ${focusRing}`}
           >
-            esc
+            Close ✕
           </button>
         </div>
 
+        <div className="px-5 pt-5">
+          <h2 id="claim-title" className="font-serif text-2xl leading-tight text-ink">
+            Review before you sign.
+          </h2>
+        </div>
+
         {!inspection.ok ? (
-          <p role="alert" className="px-5 py-5 text-sm text-red-300">
+          <p
+            role="alert"
+            className="mx-5 my-5 border-2 border-stamp bg-paper px-4 py-3 text-sm text-stamp-ink"
+          >
             Blocked: {inspection.reason} Reclaim will not let you sign this transaction.
           </p>
         ) : (
-          <div className="flex flex-col gap-4 px-5 py-5">
+          <div className="flex flex-col gap-4 px-5 pt-3 pb-5">
             <div>
-              <div className="text-xs text-zinc-500">You receive</div>
-              <div className="mt-1 font-mono text-2xl text-accent">{receive?.text}</div>
-              <div className="font-mono text-xs text-zinc-500">
+              <div className={key}>You receive</div>
+              <div className="mt-1 font-mono text-3xl break-words text-ink">{receive?.text}</div>
+              <div className="font-mono text-xs text-ink-3">
                 {receive?.known &&
                   position.estimatedUsdValue !== null &&
                   `≈ $${position.estimatedUsdValue.toFixed(2)} (scan estimate)`}
@@ -206,74 +220,98 @@ export function ClaimDialog({
               </div>
             </div>
 
-            <ul className="flex flex-col gap-2 rounded-md border border-zinc-800 bg-zinc-900 p-3 text-sm text-zinc-300">
+            <ul className="border-y-2 border-ink text-sm text-ink-2">
               {inspection.claim.lines.map((line) => (
-                <li key={line}>{line}</li>
+                <li key={line} className="border-b border-rule py-2.5">
+                  {line}
+                </li>
               ))}
-              <li>
-                Calls <span className="font-mono">{inspection.claim.functionName}</span> on{" "}
-                {inspection.claim.contractLabel}{" "}
-                <a
-                  href={`${inspection.claim.explorerUrl}/address/${inspection.claim.contract}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-mono text-zinc-400 underline decoration-zinc-700 hover:text-zinc-200"
-                >
-                  {short(inspection.claim.contract)} ↗
-                </a>{" "}
-                on {claimChain?.name ?? `chain ${action.chainId}`}. Verified contract.
+              <li className={row}>
+                <span className={key}>Contract called</span>
+                <span>
+                  <span className="font-mono text-ink">{inspection.claim.functionName}</span> on{" "}
+                  {inspection.claim.contractLabel}{" "}
+                  <a
+                    href={`${inspection.claim.explorerUrl}/address/${inspection.claim.contract}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`font-mono text-ink underline decoration-rule underline-offset-2 hover:decoration-ink ${focusRing}`}
+                  >
+                    {short(inspection.claim.contract)} ↗
+                  </a>{" "}
+                  on {claimChain?.name ?? `chain ${action.chainId}`}. Verified contract.
+                </span>
               </li>
               {recipient && (
-                <li>
-                  Funds go to <span className="font-mono">{short(recipient)}</span>
-                  {account && recipient && account.toLowerCase() !== recipient.toLowerCase() && (
-                    <span className="text-amber-300">
-                      {" "}
-                      — not your connected wallet. You would pay gas to release someone else&apos;s
-                      funds.
-                    </span>
-                  )}
-                  .
+                <li className={row}>
+                  <span className={key}>Funds go to</span>
+                  <span>
+                    <span className="font-mono text-ink">{short(recipient)}</span>
+                    {account && recipient && account.toLowerCase() !== recipient.toLowerCase() && (
+                      <span className="font-medium text-stamp-ink">
+                        {" "}
+                        — not your connected wallet. You would pay gas to release someone
+                        else&apos;s funds.
+                      </span>
+                    )}
+                    .
+                  </span>
                 </li>
               )}
-              <li>No token approvals. No Reclaim fee.</li>
-            </ul>
-
-            <div className="font-mono text-xs">
-              {sim.state === "running" && <span className="text-zinc-500">Simulating…</span>}
-              {sim.state === "ok" && (
-                <span className="text-zinc-400">
-                  <span className="text-accent">✓</span> Simulation passed · gas{" "}
-                  {sim.gas.toLocaleString()}
-                  {gasEth !== null && (
-                    <>
-                      {" "}
-                      · ≈ {Number(formatEther(gasEth)).toFixed(6)} ETH
-                      {ethUsd !== null &&
-                        ` ($${(Number(formatEther(gasEth)) * ethUsd).toFixed(2)})`}
-                    </>
+              <li className={row}>
+                <span className={key}>Simulation</span>
+                <span className="font-mono text-xs">
+                  {sim.state === "running" && <span className="text-ink-3">Simulating…</span>}
+                  {sim.state === "ok" && (
+                    <span className="text-ink-2">
+                      <span className="text-transit">✓</span> Simulation passed · gas{" "}
+                      {sim.gas.toLocaleString()}
+                    </span>
+                  )}
+                  {sim.state === "failed" && (
+                    <span role="alert" className="text-stamp-ink">
+                      ✕ Simulation failed: {sim.reason}
+                    </span>
                   )}
                 </span>
+              </li>
+              <li className={row}>
+                <span className={key}>Token approvals</span>
+                <span>No token approvals. No Reclaim fee.</span>
+              </li>
+              {sim.state === "ok" && gasEth !== null && (
+                <li className={row}>
+                  <span className={key}>Network fee</span>
+                  <span className="font-mono text-xs">
+                    ≈ {Number(formatEther(gasEth)).toFixed(6)} ETH
+                    {ethUsd !== null && ` ($${(Number(formatEther(gasEth)) * ethUsd).toFixed(2)})`}
+                  </span>
+                </li>
               )}
-              {sim.state === "failed" && (
-                <span role="alert" className="text-red-300">
-                  ✕ Simulation failed: {sim.reason}
-                </span>
-              )}
-            </div>
+            </ul>
+
+            {sim.state !== "running" && (
+              <div aria-hidden className="flex justify-end pr-2">
+                {sim.state === "ok" ? (
+                  <span className="stamp text-transit">Simulation passed</span>
+                ) : (
+                  <span className="stamp text-stamp">Simulation failed</span>
+                )}
+              </div>
+            )}
 
             {send.error && (
-              <p role="alert" className="font-mono text-xs text-red-300">
+              <p role="alert" className="font-mono text-xs text-stamp-ink">
                 {friendlyError(send.error)}
               </p>
             )}
 
             {send.data && (
-              <div className="rounded-md border border-zinc-800 px-3 py-2 font-mono text-xs text-zinc-400">
+              <div className="border border-ink bg-paper px-3 py-2 font-mono text-xs text-ink-2">
                 {done ? (
-                  <span className="text-accent">✓ Claimed</span>
+                  <span className="text-transit">✓ Claimed</span>
                 ) : reverted ? (
-                  <span className="text-red-300">✕ Transaction reverted</span>
+                  <span className="text-stamp-ink">✕ Transaction reverted</span>
                 ) : (
                   "Waiting for confirmation…"
                 )}{" "}
@@ -282,44 +320,55 @@ export function ClaimDialog({
                   href={`${claimChain?.explorer.url}/tx/${send.data}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline"
+                  className={`text-ink underline ${focusRing}`}
                 >
                   view tx ↗
                 </a>
               </div>
             )}
 
-            {done ? (
-              <button
-                onClick={() => onClose()}
-                className="rounded-md border border-zinc-700 px-4 py-2.5 text-sm"
-              >
-                Done
-              </button>
-            ) : !account ? (
-              <button
-                onClick={openConnectModal}
-                className="rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-zinc-950"
-              >
-                Connect wallet to claim
-              </button>
-            ) : (
-              <button
-                onClick={confirm}
-                disabled={busy || sim.state !== "ok"}
-                className="rounded-md bg-accent px-4 py-2.5 text-sm font-medium text-zinc-950 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {switching
-                  ? "Switching network…"
-                  : send.isPending
-                    ? "Confirm in your wallet…"
-                    : send.data && receipt.isLoading
-                      ? "Claiming…"
-                      : walletChainId !== action.chainId
-                        ? `Switch to ${claimChain?.name ?? "network"} & claim`
-                        : "Claim"}
-              </button>
-            )}
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              {!done && (
+                <button
+                  onClick={() => onClose()}
+                  disabled={busy}
+                  className={`border-2 border-ink bg-card px-4 py-2.5 font-mono text-sm text-ink hover:bg-paper-2 disabled:opacity-40 ${focusRing}`}
+                >
+                  Cancel
+                </button>
+              )}
+              {done ? (
+                <button
+                  onClick={() => onClose()}
+                  className={`border-2 border-ink bg-card px-4 py-2.5 font-mono text-sm text-ink hover:bg-paper-2 ${focusRing}`}
+                >
+                  Done
+                </button>
+              ) : !account ? (
+                <button
+                  onClick={openConnectModal}
+                  className={`border-2 border-ink bg-stamp px-4 py-2.5 font-mono text-sm font-semibold text-card ${focusRing}`}
+                >
+                  Connect wallet to claim
+                </button>
+              ) : (
+                <button
+                  onClick={confirm}
+                  disabled={busy || sim.state !== "ok"}
+                  className={`border-2 border-ink bg-stamp px-4 py-2.5 font-mono text-sm font-semibold text-card disabled:cursor-not-allowed disabled:opacity-40 ${focusRing}`}
+                >
+                  {switching
+                    ? "Switching network…"
+                    : send.isPending
+                      ? "Confirm in your wallet…"
+                      : send.data && receipt.isLoading
+                        ? "Claiming…"
+                        : walletChainId !== action.chainId
+                          ? `Switch to ${claimChain?.name ?? "network"} & claim`
+                          : "Claim"}
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
