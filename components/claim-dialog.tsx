@@ -11,12 +11,13 @@ import {
   useWaitForTransactionReceipt,
 } from "wagmi";
 import { getChainById } from "@/config/chains";
-import { inspectOutboxClaim } from "@/lib/claims/outbox";
+import { inspectClaim } from "@/lib/claims/inspect";
 import type { ClaimAction, ClaimablePosition } from "@/lib/scanner/types";
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const trim = (amount: string) =>
   Number(amount).toLocaleString("en-US", { maximumFractionDigits: 6 });
+const PLACEHOLDER_SENDER: Address = "0x000000000000000000000000000000000000dEaD";
 
 type Simulation =
   | { state: "running" }
@@ -44,7 +45,7 @@ export function ClaimDialog({
 
   const claimChain = getChainById(action.chainId);
   const inspection = useMemo(
-    () => inspectOutboxClaim(action.to, action.data, action.chainId),
+    () => inspectClaim(action.to, action.data, action.chainId),
     [action.to, action.data, action.chainId],
   );
 
@@ -56,9 +57,7 @@ export function ClaimDialog({
   const receipt = useWaitForTransactionReceipt({ hash: send.data, chainId: action.chainId });
 
   const [sim, setSim] = useState<Simulation>({ state: "running" });
-  const recipient = inspection.ok
-    ? (inspection.claim.token?.recipient ?? inspection.claim.recipient)
-    : null;
+  const recipient = inspection.ok ? inspection.claim.recipient : null;
 
   // Not a native modal <dialog>: its top layer would hide the RainbowKit wallet picker.
   useEffect(() => {
@@ -70,9 +69,9 @@ export function ClaimDialog({
     };
   }, []);
 
-  // Simulate as the connected wallet, or as the recipient before a wallet is connected.
-  // Outbox.executeTransaction is permissionless, so anyone may submit it.
-  const simFrom = account ?? recipient;
+  // Simulate as the connected wallet, or before connecting as the recipient (or any sender).
+  // Both claim types are permissionless, so anyone may submit them.
+  const simFrom = account ?? recipient ?? PLACEHOLDER_SENDER;
   useEffect(() => {
     if (!inspection.ok || !client || !simFrom) return;
     let cancelled = false;
@@ -155,46 +154,47 @@ export function ClaimDialog({
             <div>
               <div className="text-xs text-zinc-500">You receive</div>
               <div className="mt-1 font-mono text-2xl text-accent">
-                {inspection.claim.token
-                  ? `${trim(formatUnits(inspection.claim.token.amount, position.asset.decimals))} ${position.asset.symbol}`
-                  : `${trim(formatEther(inspection.claim.value))} ETH`}
+                {inspection.claim.decoded
+                  ? `${trim(formatUnits(inspection.claim.decoded.amount, position.asset.decimals))} ${position.asset.symbol}`
+                  : `${position.amountFormatted} ${position.asset.symbol}`}
               </div>
-              {position.estimatedUsdValue !== null && (
-                <div className="font-mono text-xs text-zinc-500">
-                  ≈ ${position.estimatedUsdValue.toFixed(2)}
-                </div>
-              )}
+              <div className="font-mono text-xs text-zinc-500">
+                {position.estimatedUsdValue !== null &&
+                  `≈ $${position.estimatedUsdValue.toFixed(2)}`}
+                {!inspection.claim.decoded && " · amount from scan, not the transaction"}
+              </div>
             </div>
 
             <ul className="flex flex-col gap-2 rounded-md border border-zinc-800 bg-zinc-900 p-3 text-sm text-zinc-300">
+              {inspection.claim.lines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
               <li>
-                Finalizes {position.protocol} withdrawal{" "}
-                <span className="font-mono">#{inspection.claim.index.toString()}</span>.
-              </li>
-              <li>
-                Calls <span className="font-mono">executeTransaction</span> on the{" "}
-                {inspection.claim.l2ChainName} Outbox{" "}
+                Calls <span className="font-mono">{inspection.claim.functionName}</span> on{" "}
+                {inspection.claim.contractLabel}{" "}
                 <a
-                  href={`${inspection.claim.explorerUrl}/address/${inspection.claim.outbox}`}
+                  href={`${inspection.claim.explorerUrl}/address/${inspection.claim.contract}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-mono text-zinc-400 underline decoration-zinc-700 hover:text-zinc-200"
                 >
-                  {short(inspection.claim.outbox)} ↗
+                  {short(inspection.claim.contract)} ↗
                 </a>{" "}
                 on {claimChain?.name ?? `chain ${action.chainId}`}. Verified contract.
               </li>
-              <li>
-                Funds go to <span className="font-mono">{recipient && short(recipient)}</span>
-                {account && recipient && account.toLowerCase() !== recipient.toLowerCase() && (
-                  <span className="text-amber-300">
-                    {" "}
-                    — not your connected wallet. You would pay gas to release someone else&apos;s
-                    funds.
-                  </span>
-                )}
-                .
-              </li>
+              {recipient && (
+                <li>
+                  Funds go to <span className="font-mono">{short(recipient)}</span>
+                  {account && recipient && account.toLowerCase() !== recipient.toLowerCase() && (
+                    <span className="text-amber-300">
+                      {" "}
+                      — not your connected wallet. You would pay gas to release someone else&apos;s
+                      funds.
+                    </span>
+                  )}
+                  .
+                </li>
+              )}
               <li>No token approvals. No Reclaim fee.</li>
             </ul>
 

@@ -103,17 +103,26 @@ export function blockChunks(from: bigint, to: bigint, size = LOG_CHUNK): Array<[
   return out;
 }
 
+/** At most this many getLogs requests in flight per query; the public RPC rate-limits bursts. */
+const LOG_CONCURRENCY = 4;
+
 async function getLogsChunked<T>(
   latest: bigint,
   fetch: (fromBlock: bigint, toBlock: bigint) => Promise<T[]>,
   signal: AbortSignal,
 ): Promise<T[]> {
-  const results = await Promise.all(
-    blockChunks(0n, latest).map(([from, to]) => {
+  const chunks = blockChunks(0n, latest);
+  const results: T[][] = new Array(chunks.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < chunks.length) {
       if (signal.aborted) throw new Error("aborted");
-      return withRetry(() => fetch(from, to), 2);
-    }),
-  );
+      const i = next++;
+      const [from, to] = chunks[i]!;
+      results[i] = await withRetry(() => fetch(from, to), 3);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(LOG_CONCURRENCY, chunks.length) }, worker));
   return results.flat();
 }
 
@@ -203,7 +212,7 @@ export function createArbitrumOutboxAdapter(chain: ChainConfig): ProtocolAdapter
     name: `${chain.name} bridge withdrawals`,
     category: "bridge",
     supportedChainIds: [chain.id],
-    timeoutMs: 25_000,
+    timeoutMs: 45_000,
 
     async scanAddress(user: Address, ctx: ScanContext): Promise<ClaimablePosition[]> {
       const l2 = ctx.getClient(chain.id);

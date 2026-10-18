@@ -8,6 +8,8 @@ export type ReadResult =
 export interface MulticallOptions {
   /** Calls per multicall request. */
   chunkSize?: number;
+  /** Multicall requests in flight at once. */
+  chunkConcurrency?: number;
   /** Parallel eth_calls when the chain has no verified Multicall3. */
   fallbackConcurrency?: number;
   retries?: number;
@@ -28,26 +30,32 @@ export async function readMany(
   calls: ReadCall[],
   options: MulticallOptions = {},
 ): Promise<ReadResult[]> {
-  const { chunkSize = 200, fallbackConcurrency = 6, retries = 2 } = options;
+  const { chunkSize = 200, chunkConcurrency = 4, fallbackConcurrency = 6, retries = 2 } = options;
   if (calls.length === 0) return [];
 
   if (client.chain?.contracts?.multicall3) {
-    const out: ReadResult[] = [];
-    for (let i = 0; i < calls.length; i += chunkSize) {
-      const chunk = calls.slice(i, i + chunkSize);
-      const res = await withRetry(
-        () => client.multicall({ contracts: chunk, allowFailure: true }),
-        retries,
-      );
-      for (const r of res) {
-        out.push(
+    const chunks: ReadCall[][] = [];
+    for (let i = 0; i < calls.length; i += chunkSize) chunks.push(calls.slice(i, i + chunkSize));
+    const results: ReadResult[][] = new Array(chunks.length);
+    let nextChunk = 0;
+    const chunkWorker = async () => {
+      while (nextChunk < chunks.length) {
+        const i = nextChunk++;
+        const res = await withRetry(
+          () => client.multicall({ contracts: chunks[i]!, allowFailure: true }),
+          retries,
+        );
+        results[i] = res.map((r) =>
           r.status === "success"
             ? { status: "success", result: r.result }
             : { status: "failure", error: r.error },
         );
       }
-    }
-    return out;
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(chunkConcurrency, chunks.length) }, chunkWorker),
+    );
+    return results.flat();
   }
 
   const out: ReadResult[] = new Array(calls.length);
@@ -86,5 +94,7 @@ export async function withRetry<T>(
 function isRetryable(err: unknown): boolean {
   const e = err as { status?: number; message?: string } | null;
   if (e?.status === 429 || (e?.status ?? 0) >= 500) return true;
-  return /429|rate limit|timeout|timed out|ECONNRESET|fetch failed/i.test(e?.message ?? "");
+  return /429|rate limit|too many requests|timeout|timed out|ECONNRESET|fetch failed/i.test(
+    e?.message ?? "",
+  );
 }

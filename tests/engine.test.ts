@@ -203,7 +203,7 @@ describe("runScan", () => {
 describe("adapter registry", () => {
   it("uses real adapters by default and the mock only when enabled outside production", () => {
     const real = getAdapters({}).map((a) => a.id);
-    expect(real).toEqual(["arb-outbox-4663"]);
+    expect(real).toEqual(["arb-outbox-4663", "retryables-4663", "balances-4663"]);
     expect(getAdapters({ SCANNER_MOCK: "1", NODE_ENV: "development" })).toEqual([mockAdapter]);
     expect(getAdapters({ SCANNER_MOCK: "1", NODE_ENV: "production" }).map((a) => a.id)).toEqual(
       real,
