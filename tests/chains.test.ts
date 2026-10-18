@@ -29,18 +29,20 @@ describe("chain config", () => {
     });
   });
 
+  it("has the verified canonical bridge on Robinhood mainnet", () => {
+    const b = CHAINS.robinhood.contracts.canonicalBridge;
+    expect(b.rollup.value).toBe("0x23A19d23e89166adedbDcB432518AB01e4272D94");
+    expect(b.outbox.value).toBe("0xf0ce991ea4A0d2400A4AB49b20ae333f6Dce3DE9");
+    expect(b.l2Gateways.value).toHaveLength(3);
+  });
+
   it("keeps unverified Robinhood contracts and integrations unset", () => {
-    expect(CHAINS.robinhoodTestnet.contracts.multicall3.value).toBeNull();
+    const testnet = CHAINS.robinhoodTestnet.contracts;
+    expect(testnet.multicall3.value).toBeNull();
+    for (const v of Object.values(testnet.canonicalBridge)) expect(v.value).toBeNull();
     for (const chain of [CHAINS.robinhood, CHAINS.robinhoodTestnet]) {
-      const { usdc, canonicalBridge, dexRouters } = chain.contracts;
-      const values = [
-        usdc,
-        dexRouters,
-        canonicalBridge.inbox,
-        canonicalBridge.outbox,
-        canonicalBridge.rollup,
-        ...Object.values(chain.bridgeIntegrations),
-      ];
+      const { usdc, dexRouters } = chain.contracts;
+      const values = [usdc, dexRouters, ...Object.values(chain.bridgeIntegrations)];
       for (const v of values) {
         expect(v.status).toBe("unverified");
         expect(v.value).toBeNull();

@@ -65,5 +65,7 @@ export interface ProtocolAdapter {
   name: string;
   category: PositionCategory;
   supportedChainIds: number[];
+  /** Overrides the engine default, for adapters that walk long histories. */
+  timeoutMs?: number;
   scanAddress(address: Address, ctx: ScanContext): Promise<ClaimablePosition[]>;
 }

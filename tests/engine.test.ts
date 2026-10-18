@@ -201,10 +201,13 @@ describe("runScan", () => {
 });
 
 describe("adapter registry", () => {
-  it("only includes the mock adapter when explicitly enabled outside production", () => {
-    expect(getAdapters({})).toEqual([]);
+  it("uses real adapters by default and the mock only when enabled outside production", () => {
+    const real = getAdapters({}).map((a) => a.id);
+    expect(real).toEqual(["arb-outbox-4663"]);
     expect(getAdapters({ SCANNER_MOCK: "1", NODE_ENV: "development" })).toEqual([mockAdapter]);
-    expect(getAdapters({ SCANNER_MOCK: "1", NODE_ENV: "production" })).toEqual([]);
+    expect(getAdapters({ SCANNER_MOCK: "1", NODE_ENV: "production" }).map((a) => a.id)).toEqual(
+      real,
+    );
   });
 
   it("mock adapter output passes validation", async () => {

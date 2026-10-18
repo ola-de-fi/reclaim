@@ -87,7 +87,13 @@ export async function* runScan(
 
   for (const adapter of selected) {
     push({ type: "adapter_started", adapterId: adapter.id });
-    void runAdapter(address, adapter, createContext, timeoutMs, options.signal).then((e) => {
+    void runAdapter(
+      address,
+      adapter,
+      createContext,
+      adapter.timeoutMs ?? timeoutMs,
+      options.signal,
+    ).then((e) => {
       results.push(e);
       pending--;
       push(e);

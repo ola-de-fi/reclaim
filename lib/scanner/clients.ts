@@ -15,7 +15,7 @@ export function createClientFactory(env: Record<string, string | undefined> = pr
     if (!chain) throw new Error(`Unknown chain ${chainId}`);
     const client = createPublicClient({
       chain: toViemChain(chain),
-      transport: http(getRpcUrl(chain, env), { batch: true, retryCount: 2, timeout: 10_000 }),
+      transport: http(getRpcUrl(chain, env), { retryCount: 2, timeout: 10_000 }),
     }) as PublicClient;
     cache.set(chainId, client);
     return client;

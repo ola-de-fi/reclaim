@@ -41,10 +41,14 @@ export interface ChainConfig {
   contracts: {
     multicall3: Verifiable<Address>;
     usdc: Verifiable<Address>;
+    /** Arbitrum canonical bridge. inbox / outbox / rollup / bridge live on the parent chain (L1). */
     canonicalBridge: {
       inbox: Verifiable<Address>;
       outbox: Verifiable<Address>;
       rollup: Verifiable<Address>;
+      bridge: Verifiable<Address>;
+      /** Token gateways on this chain (L2) that emit WithdrawalInitiated. */
+      l2Gateways: Verifiable<Address[]>;
     };
     dexRouters: Verifiable<Record<string, Address>>;
   };
@@ -54,10 +58,25 @@ export interface ChainConfig {
 
 const ROBINHOOD_DOCS = "https://docs.robinhood.com/chain/";
 
+const RH_CONTRACTS_SOURCE =
+  "docs.robinhood.com/chain/protocol-contracts; cross-checked onchain 2026-10-18 (Rollup.chainId()=4663, Rollup/Bridge/Outbox/Inbox reference each other)";
+
+const verifiedRh = <T>(value: T) => ({
+  status: "verified" as const,
+  value,
+  source: RH_CONTRACTS_SOURCE,
+});
+
 const unverifiedContracts = (): ChainConfig["contracts"] => ({
   multicall3: unverified(),
   usdc: unverified(),
-  canonicalBridge: { inbox: unverified(), outbox: unverified(), rollup: unverified() },
+  canonicalBridge: {
+    inbox: unverified(),
+    outbox: unverified(),
+    rollup: unverified(),
+    bridge: unverified(),
+    l2Gateways: unverified(),
+  },
   dexRouters: unverified(),
 });
 
@@ -95,6 +114,17 @@ export const CHAINS: Record<ChainKey, ChainConfig> = {
         value: "0xcA11bde05977b3631167028862bE2a173976CA11",
         source:
           "Runtime bytecode keccak 0xd5c15df6… identical to Ethereum Multicall3 (checked 2026-10-18)",
+      },
+      canonicalBridge: {
+        inbox: verifiedRh<Address>("0x1A07cc4BD17E0118BdB54D70990D2158AbAD7a2D"),
+        outbox: verifiedRh<Address>("0xf0ce991ea4A0d2400A4AB49b20ae333f6Dce3DE9"),
+        rollup: verifiedRh<Address>("0x23A19d23e89166adedbDcB432518AB01e4272D94"),
+        bridge: verifiedRh<Address>("0xDf8755334ce7A73cCF6b581C02eA649AE3E864b3"),
+        l2Gateways: verifiedRh<Address[]>([
+          "0xfd9b17206278C16DdaacF6AC8f05dBf97EdCb31e", // L2 ERC20 Gateway
+          "0x912285144fC0f6e89d3Ed16F5Ab72f87A1878959", // L2 Arb-Custom Gateway
+          "0x1D187C3E2dA52D72BC9C41e3AbA0fdFa6a7bF055", // L2 WETH Gateway
+        ]),
       },
     },
     bridgeIntegrations: unverifiedIntegrations(ROBINHOOD_INTEGRATION_NOTE),
