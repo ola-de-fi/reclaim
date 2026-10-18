@@ -1,5 +1,5 @@
 import "server-only";
-import { Agent } from "undici";
+import { Agent, fetch as undiciFetch } from "undici";
 import { createPublicClient, http, type PublicClient } from "viem";
 import { getChainById, getRpcUrl, toViemChain } from "@/config/chains";
 
@@ -25,7 +25,13 @@ export function createClientFactory(env: Record<string, string | undefined> = pr
       transport: http(getRpcUrl(chain, env), {
         retryCount: 2,
         timeout: 10_000,
-        fetchOptions: { dispatcher } as RequestInit,
+        // undici's own fetch + its Agent: a dispatcher from the undici package is not accepted by
+        // every Node version's built-in fetch (Vercel Node 24 failed with "fetch failed").
+        fetchFn: ((input: string | URL | Request, init?: RequestInit) =>
+          undiciFetch(input as string, {
+            ...(init as object),
+            dispatcher,
+          })) as unknown as typeof fetch,
       }),
     }) as PublicClient;
     cache.set(chainId, client);
