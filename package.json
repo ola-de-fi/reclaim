@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "description": "Find and recover forgotten crypto on Robinhood Chain.",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=20.9"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

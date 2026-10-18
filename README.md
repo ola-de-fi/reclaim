@@ -7,7 +7,13 @@ unclaimed rewards and airdrops, forgotten DeFi deposits. Then it helps you recov
 non-custodial: Reclaim never holds funds, never asks for approvals to its own contracts, and every
 transaction is signed by you.
 
-**Status:** Phase 0 (project foundation). No scanning or claiming yet.
+**Status:** working scanner with live streaming results and 1-click claim. Detectors:
+
+- Robinhood Chain canonical bridge withdrawals (pending and claimable)
+- Token balances
+- Failed deposits
+
+Deploying: see [docs/deploy.md](docs/deploy.md).
 
 ## Getting started
 
@@ -33,10 +39,10 @@ pnpm dev                     # http://localhost:3000
 ## Layout
 
 ```
-app/              Next.js App Router pages
+app/              Next.js App Router pages and /api/scan
 config/chains.ts  Typed chain config (verified vs unverified values)
-lib/scanner/      Scanner types (engine + adapters come in Phase 1)
-lib/providers/    Client providers (wagmi; wallet connect comes in Phase 4)
+lib/scanner/      Scanner engine, RPC clients and detector adapters
+lib/providers/    Client providers (wagmi + RainbowKit wallet connect)
 docs/             Chain facts and research notes
 tests/            Vitest tests
 ```

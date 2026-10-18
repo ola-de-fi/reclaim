@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { ClaimDialog } from "@/components/claim-dialog";
+import { ShareButton } from "@/components/share-button";
 import { getChainById } from "@/config/chains";
 import { useScan, type AdapterState } from "@/lib/scanner/use-scan";
 import type { ClaimablePosition, PositionKind } from "@/lib/scanner/types";
@@ -38,7 +39,17 @@ export function ScanView({ address }: { address: string }) {
         <section className="rounded-lg border border-zinc-800 bg-zinc-900">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 px-4 py-3 font-mono text-xs text-zinc-500">
             <span title={address}>{short(address)}</span>
-            <StatusPill phase={phase} ms={scan.ms} />
+            <span className="flex items-center gap-3">
+              {phase === "done" && (
+                <ShareButton
+                  claimableUsd={summary.claimableUsd}
+                  pendingUsd={summary.pendingUsd}
+                  count={recoverable.length}
+                  address={address}
+                />
+              )}
+              <StatusPill phase={phase} ms={scan.ms} />
+            </span>
           </div>
           <div className="grid gap-px bg-zinc-800 sm:grid-cols-3">
             <Stat label="Claimable now" value={summary.claimableUsd} accent />

@@ -5,6 +5,8 @@ import { clientIp, createRateLimiter } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Full-history scans take ~10-20s on the public RPC; don't let the serverless default kill them.
+export const maxDuration = 60;
 
 const limiter = createRateLimiter({ limit: 10, windowMs: 60_000 });
 const getClient = createClientFactory();
