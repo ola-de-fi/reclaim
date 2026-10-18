@@ -49,6 +49,8 @@ export interface ChainConfig {
       bridge: Verifiable<Address>;
       /** Token gateways on this chain (L2) that emit WithdrawalInitiated. */
       l2Gateways: Verifiable<Address[]>;
+      /** Canonical L1 <-> L2 token gateway pairs, checked both ways via counterpartGateway(). */
+      gatewayPairs: Verifiable<Array<{ l1: Address; l2: Address; name: string }>>;
     };
     dexRouters: Verifiable<Record<string, Address>>;
   };
@@ -76,6 +78,7 @@ const unverifiedContracts = (): ChainConfig["contracts"] => ({
     rollup: unverified(),
     bridge: unverified(),
     l2Gateways: unverified(),
+    gatewayPairs: unverified(),
   },
   dexRouters: unverified(),
 });
@@ -125,6 +128,28 @@ export const CHAINS: Record<ChainKey, ChainConfig> = {
           "0x912285144fC0f6e89d3Ed16F5Ab72f87A1878959", // L2 Arb-Custom Gateway
           "0x1D187C3E2dA52D72BC9C41e3AbA0fdFa6a7bF055", // L2 WETH Gateway
         ]),
+        gatewayPairs: {
+          status: "verified",
+          value: [
+            {
+              name: "ERC20 Gateway",
+              l1: "0x85001CC4867C5e1C22dA4B79BB8852B9e2a06da0",
+              l2: "0xfd9b17206278C16DdaacF6AC8f05dBf97EdCb31e",
+            },
+            {
+              name: "Arb-Custom Gateway",
+              l1: "0x9368EAEbFe6E063C69dcF8126711A6997E0eCeE1",
+              l2: "0x912285144fC0f6e89d3Ed16F5Ab72f87A1878959",
+            },
+            {
+              name: "WETH Gateway",
+              l1: "0xF7e12b9614b509C747ab4423bC4ACF923759Cf1B",
+              l2: "0x1D187C3E2dA52D72BC9C41e3AbA0fdFa6a7bF055",
+            },
+          ],
+          source:
+            "docs.robinhood.com/chain/protocol-contracts; counterpartGateway() checked both ways onchain (Ethereum + Robinhood Chain) 2026-10-18",
+        },
       },
     },
     bridgeIntegrations: unverifiedIntegrations(ROBINHOOD_INTEGRATION_NOTE),

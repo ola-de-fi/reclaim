@@ -11,6 +11,7 @@ import {
   useWaitForTransactionReceipt,
 } from "wagmi";
 import { getChainById } from "@/config/chains";
+import { tokenByL1 } from "@/config/tokens";
 import { inspectClaim } from "@/lib/claims/inspect";
 import type { ClaimAction, ClaimablePosition } from "@/lib/scanner/types";
 
@@ -88,23 +89,65 @@ export function ClaimDialog({
     if (receipt.data?.status === "success") onClaimed(position.id);
   }, [receipt.data?.status, onClaimed, position.id]);
 
+  // Guards the whole confirm flow (switch + fresh simulation + send) against double-submit.
+  const submittingRef = useRef(false);
+  const [submitting, setSubmitting] = useState(false);
+
   async function confirm() {
-    if (!account || !client) return;
-    if (walletChainId !== action.chainId) {
-      await switchChainAsync({ chainId: action.chainId });
+    if (!account || !client || submittingRef.current) return;
+    submittingRef.current = true;
+    setSubmitting(true);
+    try {
+      if (walletChainId !== action.chainId) {
+        await switchChainAsync({ chainId: action.chainId });
+      }
+      // Fresh simulation with the exact sender, immediately before signing.
+      const fresh = await simulate(client, account, action.to, action.data);
+      setSim(fresh);
+      if (fresh.state !== "ok") return;
+      await send.sendTransactionAsync({
+        chainId: action.chainId,
+        to: action.to,
+        data: action.data,
+        value: 0n,
+        gas: (fresh.gas * 12n) / 10n,
+      });
+    } catch {
+      // Errors surface through send.error / the switch hook.
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
     }
-    // Fresh simulation with the exact sender, immediately before signing.
-    const fresh = await simulate(client, account, action.to, action.data);
-    setSim(fresh);
-    if (fresh.state !== "ok") return;
-    send.sendTransaction({
-      chainId: action.chainId,
-      to: action.to,
-      data: action.data,
-      value: 0n,
-      gas: (fresh.gas * 12n) / 10n,
-    });
   }
+
+  // What the calldata itself says is received. Symbol/decimals come from our token list, never the scan.
+  const receive = (() => {
+    if (!inspection.ok) return null;
+    const d = inspection.claim.decoded;
+    if (!d) {
+      return {
+        text: `${position.amountFormatted} ${position.asset.symbol}`,
+        known: true,
+        note: " · per scan, not decoded from the transaction",
+      };
+    }
+    if (!d.tokenL1) {
+      return { text: `${trim(formatUnits(d.amount, 18))} ETH`, known: true, note: "" };
+    }
+    const t = tokenByL1(d.tokenL1);
+    if (!t) {
+      return {
+        text: `${d.amount.toString()} units of unknown token ${short(d.tokenL1)}`,
+        known: false,
+        note: "",
+      };
+    }
+    return {
+      text: `${trim(formatUnits(d.amount, t.decimals))} ${t.symbol}`,
+      known: true,
+      note: "",
+    };
+  })();
 
   const gasEth = sim.state === "ok" && sim.gasPrice !== null ? sim.gas * sim.gasPrice : null;
   const ethUsd =
@@ -115,7 +158,8 @@ export function ClaimDialog({
 
   const done = receipt.data?.status === "success";
   const reverted = receipt.data?.status === "reverted";
-  const busy = switching || send.isPending || (send.data !== undefined && receipt.isLoading);
+  const busy =
+    submitting || switching || send.isPending || (send.data !== undefined && receipt.isLoading);
 
   return (
     <div
@@ -153,15 +197,12 @@ export function ClaimDialog({
           <div className="flex flex-col gap-4 px-5 py-5">
             <div>
               <div className="text-xs text-zinc-500">You receive</div>
-              <div className="mt-1 font-mono text-2xl text-accent">
-                {inspection.claim.decoded
-                  ? `${trim(formatUnits(inspection.claim.decoded.amount, position.asset.decimals))} ${position.asset.symbol}`
-                  : `${position.amountFormatted} ${position.asset.symbol}`}
-              </div>
+              <div className="mt-1 font-mono text-2xl text-accent">{receive?.text}</div>
               <div className="font-mono text-xs text-zinc-500">
-                {position.estimatedUsdValue !== null &&
-                  `≈ $${position.estimatedUsdValue.toFixed(2)}`}
-                {!inspection.claim.decoded && " · amount from scan, not the transaction"}
+                {receive?.known &&
+                  position.estimatedUsdValue !== null &&
+                  `≈ $${position.estimatedUsdValue.toFixed(2)} (scan estimate)`}
+                {receive?.note}
               </div>
             </div>
 

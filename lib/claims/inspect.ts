@@ -1,4 +1,4 @@
-import { decodeFunctionData, type Address, type Hex } from "viem";
+import { decodeFunctionData, encodeFunctionData, type Address, type Hex } from "viem";
 import { ALL_CHAINS } from "@/config/chains";
 import { inspectOutboxClaim } from "./outbox";
 import { ARB_RETRYABLE_TX, retryableAbi } from "./retryable";
@@ -62,6 +62,9 @@ function inspectRedeem(
     const d = decodeFunctionData({ abi: retryableAbi, data });
     if (d.functionName !== "redeem") {
       return { ok: false, reason: "Calldata is not a retryable redeem call." };
+    }
+    if (encodeFunctionData({ abi: retryableAbi, ...d }).toLowerCase() !== data.toLowerCase()) {
+      return { ok: false, reason: "Calldata has unexpected trailing bytes." };
     }
     const [ticketId] = d.args;
     return {

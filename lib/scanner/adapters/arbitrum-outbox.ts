@@ -9,6 +9,7 @@ import {
   type PublicClient,
 } from "viem";
 import { CHAINS, type ChainConfig } from "@/config/chains";
+import { tokenByL1 } from "@/config/tokens";
 import { outboxAbi } from "@/lib/claims/outbox";
 import { readMany, withRetry } from "../multicall";
 import type { ClaimablePosition, ProtocolAdapter, ScanContext } from "../types";
@@ -103,6 +104,48 @@ export function blockChunks(from: bigint, to: bigint, size = LOG_CHUNK): Array<[
   return out;
 }
 
+/** Parallel constructOutboxProof calls. */
+const PROOF_CONCURRENCY = 4;
+/** Parallel getTransactionReceipt calls for token withdrawals. */
+const RECEIPT_CONCURRENCY = 6;
+/** Most withdrawals processed per scan (newest first); protects against spam-filled wallets. */
+export const MAX_WITHDRAWALS = 200;
+const UNVERIFIED_NOTE = "Token not in Reclaim's verified list";
+
+/**
+ * Makes an on-chain symbol() safe to display: printable ASCII only, max 12 chars.
+ * Unknown tokens are also suffixed with "?" by the caller so they never look like a real asset.
+ */
+export function sanitizeSymbol(raw: unknown): string {
+  const clean = String(raw ?? "")
+    .replace(/[^\x21-\x7E]/g, "")
+    .slice(0, 12);
+  return clean || "TOKEN";
+}
+
+/**
+ * Runs fn over items with at most `limit` in flight, preserving order.
+ * Stops starting new items once the signal aborts (throws "aborted").
+ */
+export async function mapPool<T, R>(
+  items: readonly T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+  signal?: AbortSignal,
+): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      if (signal?.aborted) throw new Error("aborted");
+      const i = next++;
+      out[i] = await fn(items[i]!, i);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(Math.max(1, limit), items.length) }, worker));
+  return out;
+}
+
 /** At most this many getLogs requests in flight per query; the public RPC rate-limits bursts. */
 const LOG_CONCURRENCY = 4;
 
@@ -111,18 +154,12 @@ async function getLogsChunked<T>(
   fetch: (fromBlock: bigint, toBlock: bigint) => Promise<T[]>,
   signal: AbortSignal,
 ): Promise<T[]> {
-  const chunks = blockChunks(0n, latest);
-  const results: T[][] = new Array(chunks.length);
-  let next = 0;
-  const worker = async () => {
-    while (next < chunks.length) {
-      if (signal.aborted) throw new Error("aborted");
-      const i = next++;
-      const [from, to] = chunks[i]!;
-      results[i] = await withRetry(() => fetch(from, to), 3);
-    }
-  };
-  await Promise.all(Array.from({ length: Math.min(LOG_CONCURRENCY, chunks.length) }, worker));
+  const results = await mapPool(
+    blockChunks(0n, latest),
+    LOG_CONCURRENCY,
+    ([from, to]) => withRetry(() => fetch(from, to), 3),
+    signal,
+  );
   return results.flat();
 }
 
@@ -259,7 +296,7 @@ export function createArbitrumOutboxAdapter(chain: ChainConfig): ProtocolAdapter
           withdrawals.push({ message: m, token: "native", amount: m.callvalue });
       }
 
-      const tokenIds = tokenLogs.flatMap((l) =>
+      let tokenIds = tokenLogs.flatMap((l) =>
         l.args._l2ToL1Id !== undefined && l.args.l1Token && l.args._amount !== undefined
           ? [
               {
@@ -271,11 +308,23 @@ export function createArbitrumOutboxAdapter(chain: ChainConfig): ProtocolAdapter
             ]
           : [],
       );
+      // Newest first, capped, so a spammed wallet can't make us fetch thousands of receipts.
+      tokenIds.sort((a, b) => (a.position < b.position ? 1 : a.position > b.position ? -1 : 0));
+      if (tokenIds.length > MAX_WITHDRAWALS) {
+        ctx.logger.warn("Token withdrawals truncated", {
+          total: tokenIds.length,
+          kept: MAX_WITHDRAWALS,
+        });
+        tokenIds = tokenIds.slice(0, MAX_WITHDRAWALS);
+      }
       if (tokenIds.length > 0) {
         // The matching L2ToL1Tx is emitted in the same transaction as WithdrawalInitiated.
         const txHashes = [...new Set(tokenIds.map((t) => t.txHash))];
-        const receipts = await Promise.all(
-          txHashes.map((hash) => withRetry(() => l2.getTransactionReceipt({ hash }), 2)),
+        const receipts = await mapPool(
+          txHashes,
+          RECEIPT_CONCURRENCY,
+          (hash) => withRetry(() => l2.getTransactionReceipt({ hash }), 2),
+          ctx.signal,
         );
         const msgLogs = parseEventLogs({
           abi: [L2ToL1Tx],
@@ -298,10 +347,26 @@ export function createArbitrumOutboxAdapter(chain: ChainConfig): ProtocolAdapter
       }
 
       if (withdrawals.length === 0) return [];
+      withdrawals.sort((a, b) =>
+        a.message.position < b.message.position
+          ? 1
+          : a.message.position > b.message.position
+            ? -1
+            : 0,
+      );
+      if (withdrawals.length > MAX_WITHDRAWALS) {
+        ctx.logger.warn("Withdrawals truncated", {
+          total: withdrawals.length,
+          kept: MAX_WITHDRAWALS,
+        });
+        withdrawals.length = MAX_WITHDRAWALS;
+      }
 
       const l1Tokens = [
         ...new Set(withdrawals.flatMap((w) => (w.token === "native" ? [] : [w.token]))),
       ];
+      // Registry tokens use registry metadata; only unknown tokens are read from chain.
+      const unknownTokens = l1Tokens.filter((t) => !tokenByL1(t));
       const [spent, meta, sendCount, gasPrice] = await Promise.all([
         readMany(
           l1,
@@ -315,7 +380,7 @@ export function createArbitrumOutboxAdapter(chain: ChainConfig): ProtocolAdapter
         readMany(l1, [
           { address: rollup, abi: rollupAbi, functionName: "confirmPeriodBlocks" },
           { address: ETH_USD_FEED, abi: feedAbi, functionName: "latestRoundData" },
-          ...l1Tokens.flatMap((token) => [
+          ...unknownTokens.flatMap((token) => [
             { address: token, abi: erc20Abi, functionName: "symbol" },
             { address: token, abi: erc20Abi, functionName: "decimals" },
           ]),
@@ -331,56 +396,96 @@ export function createArbitrumOutboxAdapter(chain: ChainConfig): ProtocolAdapter
         feedRes?.status === "success"
           ? Number((feedRes.result as readonly [bigint, bigint, bigint, bigint, bigint])[1]) / 1e8
           : null;
-      const tokenInfo = new Map(
-        l1Tokens.map((token, i) => {
-          const sym = tokenRes[i * 2];
-          const dec = tokenRes[i * 2 + 1];
-          return [
-            token,
-            {
-              symbol: sym?.status === "success" ? String(sym.result) : "TOKEN",
-              decimals: dec?.status === "success" ? Number(dec.result) : null,
-            },
-          ] as const;
-        }),
-      );
+      type TokenInfo = { symbol: string; decimals: number | null; verified: boolean };
+      const tokenInfo = new Map<Address, TokenInfo>();
+      for (const token of l1Tokens) {
+        const known = tokenByL1(token);
+        if (known) {
+          tokenInfo.set(token, { symbol: known.symbol, decimals: known.decimals, verified: true });
+        }
+      }
+      unknownTokens.forEach((token, i) => {
+        const sym = tokenRes[i * 2];
+        const dec = tokenRes[i * 2 + 1];
+        const decimals = dec?.status === "success" ? Number(dec.result) : null;
+        tokenInfo.set(token, {
+          symbol: `${sanitizeSymbol(sym?.status === "success" ? sym.result : "")}?`,
+          decimals:
+            decimals !== null && Number.isInteger(decimals) && decimals <= 36 ? decimals : null,
+          verified: false,
+        });
+      });
       const gasUsd =
         gasPrice !== null && ethUsd !== null
           ? Number(formatUnits(gasPrice * EXECUTE_GAS, 18)) * ethUsd
           : null;
 
-      const positions: ClaimablePosition[] = [];
-      for (const [i, w] of withdrawals.entries()) {
+      // Unspent withdrawals with their status, then proofs for the claimable ones in a small pool.
+      const open = withdrawals.flatMap((w, i) => {
         const s = spent[i];
         if (s?.status !== "success") {
           ctx.logger.warn("isSpent failed", { position: String(w.message.position) });
-          continue;
+          return [];
         }
-        if (s.result === true) continue;
-
-        const info =
-          w.token === "native"
-            ? { symbol: "ETH", decimals: 18 }
-            : (tokenInfo.get(w.token) ?? { symbol: "TOKEN", decimals: null });
-        if (info.decimals === null) continue;
-        const amount = formatUnits(w.amount, info.decimals);
-        const isEth = w.token === "native" || w.token.toLowerCase() === L1_WETH.toLowerCase();
-        const usd = isEth && ethUsd !== null ? Number(amount) * ethUsd : null;
-
+        if (s.result === true) return [];
         const status = classifyWithdrawal(
           w.message.position,
           sendCount,
           w.message.timestamp,
           challengeSeconds,
         );
+        return [{ w, status }];
+      });
+      const proofs = await mapPool(
+        open,
+        PROOF_CONCURRENCY,
+        async ({ w, status }): Promise<readonly Hex[] | null> => {
+          if (status.kind !== "claimable") return null;
+          try {
+            const [, , proof] = await withRetry(
+              () =>
+                l2.readContract({
+                  address: NODE_INTERFACE,
+                  abi: nodeInterfaceAbi,
+                  functionName: "constructOutboxProof",
+                  args: [sendCount, w.message.position],
+                }),
+              2,
+            );
+            return proof;
+          } catch (err) {
+            ctx.logger.warn("constructOutboxProof failed", {
+              position: String(w.message.position),
+              error: err instanceof Error ? err.message : String(err),
+            });
+            return null;
+          }
+        },
+        ctx.signal,
+      );
+
+      const positions: ClaimablePosition[] = [];
+      for (const [i, { w, status }] of open.entries()) {
+        const info: TokenInfo =
+          w.token === "native"
+            ? { symbol: "ETH", decimals: 18, verified: true }
+            : (tokenInfo.get(w.token) ?? { symbol: "TOKEN?", decimals: null, verified: false });
+        if (info.decimals === null) continue;
+        const amount = formatUnits(w.amount, info.decimals);
+        const isEth = w.token === "native" || w.token.toLowerCase() === L1_WETH.toLowerCase();
+        const usd = info.verified && isEth && ethUsd !== null ? Number(amount) * ethUsd : null;
+
+        const proof = proofs[i] ?? null;
+        const notes = [`Canonical bridge withdrawal #${w.message.position}.`];
+        if (!info.verified) notes.push(`${UNVERIFIED_NOTE}.`);
+        if (status.kind === "claimable" && !proof) {
+          notes.push("Could not build the claim proof right now; rescan to retry.");
+        } else {
+          notes.push(`Claim executes on ${parent.name} Outbox.`);
+        }
+
         let claimAction: ClaimablePosition["claimAction"] = { type: "none" };
-        if (status.kind === "claimable") {
-          const [, , proof] = await l2.readContract({
-            address: NODE_INTERFACE,
-            abi: nodeInterfaceAbi,
-            functionName: "constructOutboxProof",
-            args: [sendCount, w.message.position],
-          });
+        if (status.kind === "claimable" && proof) {
           const m = w.message;
           claimAction = {
             type: "direct",
@@ -418,10 +523,7 @@ export function createArbitrumOutboxAdapter(chain: ChainConfig): ProtocolAdapter
           estimatedGasUsd: gasUsd,
           ...(status.kind === "pending" ? { readyAt: status.readyAt } : {}),
           claimAction,
-          risk: {
-            verified: true,
-            notes: `Canonical bridge withdrawal #${w.message.position}. Claim executes on ${parent.name} Outbox.`,
-          },
+          risk: { verified: info.verified, notes: notes.join(" ") },
           source: `${chain.explorer.url}/tx/${w.message.txHash}`,
         });
       }

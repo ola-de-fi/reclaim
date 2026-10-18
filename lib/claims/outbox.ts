@@ -1,4 +1,4 @@
-import { decodeFunctionData, parseAbi, type Address, type Hex } from "viem";
+import { decodeFunctionData, encodeFunctionData, parseAbi, type Address, type Hex } from "viem";
 import { ALL_CHAINS, CHAINS } from "@/config/chains";
 
 export const outboxAbi = parseAbi([
@@ -53,12 +53,36 @@ export function inspectOutboxClaim(
     if (decoded.functionName !== "executeTransaction") {
       return { ok: false, reason: "Calldata is not an Outbox executeTransaction call." };
     }
-    const [, index, , recipient, , , , value, innerData] = decoded.args;
+    if (encodeFunctionData({ abi: outboxAbi, ...decoded }).toLowerCase() !== data.toLowerCase()) {
+      return { ok: false, reason: "Calldata has unexpected trailing bytes." };
+    }
+    const [, index, l2Sender, target, , , , value, innerData] = decoded.args;
     let token: OutboxClaim["token"];
+    let recipient: Address = target;
     if (innerData !== "0x") {
-      const inner = decodeFunctionData({ abi: gatewayAbi, data: innerData });
+      const pairs = owner.contracts.canonicalBridge.gatewayPairs;
+      const pair =
+        pairs.status === "verified"
+          ? pairs.value.find((p) => p.l1.toLowerCase() === target.toLowerCase())
+          : undefined;
+      if (!pair || pair.l2.toLowerCase() !== l2Sender.toLowerCase()) {
+        return { ok: false, reason: "Not a canonical token withdrawal." };
+      }
+      let inner;
+      try {
+        inner = decodeFunctionData({ abi: gatewayAbi, data: innerData });
+      } catch {
+        return { ok: false, reason: "Not a canonical token withdrawal." };
+      }
+      if (
+        inner.functionName !== "finalizeInboundTransfer" ||
+        encodeFunctionData({ abi: gatewayAbi, ...inner }).toLowerCase() !== innerData.toLowerCase()
+      ) {
+        return { ok: false, reason: "Not a canonical token withdrawal." };
+      }
       const [address, , tokenRecipient, amount] = inner.args;
       token = { address, amount, recipient: tokenRecipient };
+      recipient = tokenRecipient;
     }
     return {
       ok: true,
