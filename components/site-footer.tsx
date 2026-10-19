@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stamp";
-const REPO_URL = process.env.NEXT_PUBLIC_REPO_URL ?? "https://github.com/ola-de-fi/reclaim";
+export const X_URL = "https://x.com/oladefi";
+export const REPO_URL = process.env.NEXT_PUBLIC_REPO_URL ?? "https://github.com/ola-de-fi/reclaim";
 
 export function SiteFooter() {
   const links: Array<[string, string]> = [
@@ -31,6 +32,14 @@ export function SiteFooter() {
             Source code ↗
           </a>
         )}
+        <a
+          href={X_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`hover:text-ink hover:underline ${focus}`}
+        >
+          Contact on X ↗
+        </a>
       </nav>
     </footer>
   );

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DocPage, DocSection } from "@/components/doc-page";
+import { REPO_URL, X_URL } from "@/components/site-footer";
 
 export const metadata: Metadata = {
   title: "About",
@@ -51,8 +52,15 @@ export default function AboutPage() {
 
       <DocSection title="Who runs it">
         <p>
-          Reclaim is built and run by an independent developer. It is early software: always read
-          the review screen before you sign anything.
+          Reclaim is built and run by an independent developer,{" "}
+          <a href={X_URL} target="_blank" rel="noopener noreferrer">
+            @oladefi on X
+          </a>
+          . The full source code is{" "}
+          <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
+            public on GitHub
+          </a>
+          . It is early software: always read the review screen before you sign anything.
         </p>
       </DocSection>
     </DocPage>

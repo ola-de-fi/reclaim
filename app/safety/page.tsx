@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DocPage, DocSection } from "@/components/doc-page";
 import { CHAINS } from "@/config/chains";
+import { X_URL } from "@/components/site-footer";
 
 export const metadata: Metadata = {
   title: "Safety",
@@ -150,7 +151,11 @@ export default function SafetyPage() {
           lookalike sites are especially welcome.
         </p>
         <p>
-          Open an issue on{" "}
+          Message{" "}
+          <a href={X_URL} target="_blank" rel="noopener noreferrer">
+            @oladefi on X
+          </a>{" "}
+          or open an issue on{" "}
           <a href={`${REPO_URL}/issues`} target="_blank" rel="noopener noreferrer">
             GitHub
           </a>
