@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stamp";
-const REPO_URL = process.env.NEXT_PUBLIC_REPO_URL;
+const REPO_URL = process.env.NEXT_PUBLIC_REPO_URL ?? "https://github.com/ola-de-fi/reclaim";
 
 export function SiteFooter() {
   const links: Array<[string, string]> = [

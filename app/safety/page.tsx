@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 
 const bridge = CHAINS.robinhood.contracts.canonicalBridge;
 const ETHERSCAN = CHAINS.ethereum.explorer.url;
+const REPO_URL = process.env.NEXT_PUBLIC_REPO_URL ?? "https://github.com/ola-de-fi/reclaim";
 
 const contracts: Array<{ name: string; address: string | null; where: string; what: string }> = [
   {
@@ -147,6 +148,14 @@ export default function SafetyPage() {
         <p>
           Found a bug, or something that looks wrong? Please tell us before using it. Reports about
           lookalike sites are especially welcome.
+        </p>
+        <p>
+          Open an issue on{" "}
+          <a href={`${REPO_URL}/issues`} target="_blank" rel="noopener noreferrer">
+            GitHub
+          </a>
+          . Reclaim&apos;s full source code is public there, so you can check everything on this
+          page yourself.
         </p>
       </DocSection>
     </DocPage>
