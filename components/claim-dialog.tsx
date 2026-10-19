@@ -94,7 +94,8 @@ export function ClaimDialog({
   const [submitting, setSubmitting] = useState(false);
 
   async function confirm() {
-    if (!account || !client || submittingRef.current) return;
+    // Never send anything the allow-list check rejected, whatever the UI shows.
+    if (!inspection.ok || !account || !client || submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
     try {
