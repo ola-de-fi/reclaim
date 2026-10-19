@@ -83,7 +83,7 @@ export function Action({ p, block }: { p: ClaimablePosition; block?: boolean }) 
   if (claimed.has(p.id)) {
     return (
       <span className={`${base} border-2 border-ink text-ink`} role="status">
-        ✓ Claimed
+        ✓ Collected
       </span>
     );
   }
@@ -94,7 +94,7 @@ export function Action({ p, block }: { p: ClaimablePosition; block?: boolean }) 
         onClick={() => open(p)}
         className={`${base} border-2 border-ink bg-stamp text-card shadow-ledger hover:translate-x-px hover:translate-y-px hover:shadow-none`}
       >
-        Claim
+        Collect
       </button>
     );
   }
@@ -118,7 +118,7 @@ export function Action({ p, block }: { p: ClaimablePosition; block?: boolean }) 
       disabled
       className={`${base} cursor-not-allowed border-2 border-dashed border-ink-3 text-ink-3`}
     >
-      {p.kind === "pending" ? "Not ready" : "Claim · soon"}
+      {p.kind === "pending" ? "Not ready" : "Collect · soon"}
     </button>
   );
 }

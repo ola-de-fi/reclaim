@@ -309,7 +309,7 @@ export function ClaimDialog({
             {send.data && (
               <div className="border border-ink bg-paper px-3 py-2 font-mono text-xs text-ink-2">
                 {done ? (
-                  <span className="text-transit">✓ Claimed</span>
+                  <span className="text-transit">✓ Collected</span>
                 ) : reverted ? (
                   <span className="text-stamp-ink">✕ Transaction reverted</span>
                 ) : (
@@ -349,7 +349,7 @@ export function ClaimDialog({
                   onClick={openConnectModal}
                   className={`border-2 border-ink bg-stamp px-4 py-2.5 font-mono text-sm font-semibold text-card ${focusRing}`}
                 >
-                  Connect wallet to claim
+                  Connect wallet to collect
                 </button>
               ) : (
                 <button
@@ -362,10 +362,10 @@ export function ClaimDialog({
                     : send.isPending
                       ? "Confirm in your wallet…"
                       : send.data && receipt.isLoading
-                        ? "Claiming…"
+                        ? "Collecting…"
                         : walletChainId !== action.chainId
-                          ? `Switch to ${claimChain?.name ?? "network"} & claim`
-                          : "Claim"}
+                          ? `Switch to ${claimChain?.name ?? "network"} & collect`
+                          : "Collect"}
                 </button>
               )}
             </div>
@@ -399,7 +399,8 @@ function friendlyError(err: unknown): string {
       ? ((err as { shortMessage?: string }).shortMessage ?? err.message)
       : String(err);
   if (/user rejected|denied/i.test(msg)) return "You rejected the request in your wallet.";
-  if (/ALREADY_SPENT|already spent/i.test(msg)) return "This withdrawal has already been claimed.";
+  if (/ALREADY_SPENT|already spent/i.test(msg))
+    return "This withdrawal has already been collected.";
   if (/insufficient funds/i.test(msg)) return "Not enough ETH on Ethereum to pay gas.";
   return msg.split("\n")[0] ?? "Unknown error";
 }

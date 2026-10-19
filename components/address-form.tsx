@@ -32,7 +32,7 @@ export function AddressForm() {
   return (
     <form onSubmit={submit} noValidate aria-labelledby="form-title">
       <div className="flex justify-between gap-3 border-b border-ink px-4 py-3 font-mono text-[11px] tracking-widest text-ink uppercase sm:px-5">
-        <span>Form RC-1 · Claim enquiry</span>
+        <span>Form RC-1 · Lost-property enquiry</span>
       </div>
       <div className="px-4 pt-6 pb-5 sm:px-5">
         <h2 id="form-title" className="mb-5 font-serif text-3xl leading-tight text-ink">

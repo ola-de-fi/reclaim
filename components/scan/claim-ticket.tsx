@@ -5,7 +5,7 @@ import { Action, CATEGORY_LABEL, RiskMark, chainName, itemNo, netAfterGas, usd }
 
 function windowLabel(p: ClaimablePosition) {
   if (p.claimAction.type === "direct") return "Ready now";
-  if (p.claimAction.type === "external") return "Claim in app";
+  if (p.claimAction.type === "external") return "Open in app";
   if (p.claimAction.type === "multi_step") return "Multi-step";
   return "Manual";
 }
@@ -31,7 +31,7 @@ export function ClaimTicket({ p, index }: { p: ClaimablePosition; index: number 
               <span className="text-ink-2">{chainName(p.chainId)}</span>
             </h3>
           </div>
-          <span className="stamp shrink-0 text-stamp-ink">Claimable</span>
+          <span className="stamp shrink-0 text-stamp-ink">Ready</span>
         </div>
         <dl className="mt-5 grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-[auto_auto_auto] sm:justify-start">
           <div className="col-span-2 min-w-0 sm:col-span-1">

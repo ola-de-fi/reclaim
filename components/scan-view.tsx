@@ -64,7 +64,7 @@ export function ScanView({ address }: { address: string }) {
 
         <div className="grid grid-cols-1 border-b border-rule sm:grid-cols-3">
           <Stat
-            label="Claimable now"
+            label="Ready now"
             value={summary.claimableUsd}
             tone="text-stamp-ink"
             note={

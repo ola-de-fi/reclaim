@@ -78,7 +78,7 @@ export async function GET(req: Request) {
 
   const stamp =
     claimable > 0
-      ? { text: "CLAIMABLE", color: STAMP }
+      ? { text: "READY", color: STAMP }
       : pending > 0
         ? { text: "IN TRANSIT", color: STAMP }
         : { text: "NOTHING FOUND", color: INK3 };
@@ -133,7 +133,7 @@ export async function GET(req: Request) {
             }}
           >
             <div style={{ display: "flex" }}>RECLAIM · LOST-PROPERTY OFFICE</div>
-            <div style={{ display: "flex", color: STAMP }}>CLAIM TICKET</div>
+            <div style={{ display: "flex", color: STAMP }}>RECOVERY TICKET</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ fontFamily: SERIF, fontSize: 54, color: INK2, lineHeight: 1 }}>Found</div>
@@ -151,7 +151,7 @@ export async function GET(req: Request) {
             </div>
             <div style={{ display: "flex", fontSize: 28, color: INK2, marginTop: 6 }}>
               <span style={{ color: STAMP }}>{usd(claimable)}</span>
-              <span>&nbsp;claimable ·&nbsp;</span>
+              <span>&nbsp;ready ·&nbsp;</span>
               <span style={{ color: NAVY }}>{usd(pending)}</span>
               <span>&nbsp;pending</span>
             </div>

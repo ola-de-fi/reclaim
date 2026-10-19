@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAddress, isAddress } from "viem";
 import { ScanView } from "@/components/scan-view";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 type Props = { params: Promise<{ address: string }> };
@@ -29,6 +30,7 @@ export default async function ScanPage({ params }: Props) {
         </Link>
         <ScanView address={address} />
       </main>
+      <SiteFooter />
     </div>
   );
 }

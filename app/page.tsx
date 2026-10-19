@@ -1,4 +1,5 @@
 import { AddressForm } from "@/components/address-form";
+import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 const STEPS = [
@@ -15,7 +16,7 @@ const STEPS = [
   {
     n: "Step 03",
     title: "Collect, in person",
-    body: "Connect your wallet, review a simulated claim, and sign it yourself. Funds go straight to you.",
+    body: "Connect your wallet, review a simulated transaction, and sign it yourself. Funds go straight to you.",
   },
 ] as const;
 
@@ -23,9 +24,9 @@ const REGISTER = [
   {
     cat: "RC-W",
     title: "Unclaimed bridge withdrawals",
-    body: "Robinhood Chain → Ethereum withdrawals never claimed on Ethereum. Claimable once the ~6.4-day challenge period ends; pending until then.",
+    body: "Robinhood Chain → Ethereum withdrawals never collected on Ethereum. Ready once the ~6.4-day challenge period ends; pending until then.",
     stamps: [
-      { label: "Claimable", tone: "text-stamp-ink" },
+      { label: "Ready", tone: "text-stamp-ink" },
       { label: "Pending", tone: "text-transit" },
     ],
   },
@@ -45,7 +46,7 @@ const REGISTER = [
 
 const TRUST = [
   ["Non-custodial", "Reclaim never holds your funds."],
-  ["Simulated first", "Every claim is simulated before you sign."],
+  ["Simulated first", "Every transaction is simulated before you sign."],
   ["No approvals", "Never asks for token allowances."],
   ["No fee", "You pay network gas only."],
   ["Read-only scan", "No wallet needed to look."],
@@ -66,7 +67,7 @@ export default function Home() {
               Money you <em className="text-stamp">left behind</em> is still waiting for you.
             </h1>
             <p className="mt-7 max-w-[34ch] text-lg text-pretty text-ink-2">
-              Bridge withdrawals nobody claimed. Deposits that failed halfway. Reclaim keeps the
+              Bridge withdrawals nobody collected. Deposits that failed halfway. Reclaim keeps the
               register of what is stuck on Robinhood Chain, and hands it back. You sign every
               transaction.
             </p>
@@ -181,10 +182,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="flex flex-col gap-1 border-t border-ink py-5 font-mono text-xs text-ink-2 sm:flex-row sm:justify-between">
-        <p>Independent tool. Not affiliated with Robinhood.</p>
-        <p>Non-custodial. Reclaim never holds your funds or asks for token approvals.</p>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

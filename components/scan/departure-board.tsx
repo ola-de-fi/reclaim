@@ -109,7 +109,7 @@ export function DepartureBoard({ positions }: { positions: ClaimablePosition[] }
         })}
       </ul>
       <p className="border-t border-ink px-4 py-2 font-mono text-[11px] text-ink-2 sm:px-5">
-        Each becomes claimable when its waiting period ends. Track runs 7 days from now.
+        Each becomes ready to collect when its waiting period ends. Track runs 7 days from now.
       </p>
     </section>
   );
